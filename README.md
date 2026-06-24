@@ -17,7 +17,7 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 <br/>
 
-[Quick Start](#-quick-start) · [Connect Agents](#-connect-chatgpt-claude--gemini) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference)
+[Quick Start](#-quick-start) · [Connect Agents](#-connect-chatgpt-claude--gemini) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations)
 
 </div>
 
@@ -175,9 +175,21 @@ lite-toon/
 git clone https://github.com/Luke-official/lite-toon.git
 cd lite-toon
 npm install
+cp .env.example apps/demo/.env.local   # optional — see Environment variables below
 npm run build
 npm run dev:clean    # kills stale ports 3000–3002, then starts turbo dev
 ```
+
+### Environment variables
+
+Copy [`.env.example`](.env.example) to `apps/demo/.env.local` if you need overrides. All variables are optional for local development.
+
+| Variable | Default | Used by |
+|---|---|---|
+| `OAUTH_CLIENT_ID` | `lite-toon-demo` | Demo OAuth server (`apps/demo/src/lib/auth.ts`) |
+| `BASE_URL` | `http://localhost:3000` | `apps/demo/scripts/test-*.js` |
+
+Never commit `.env` or `.env.local` — they are listed in `.gitignore`.
 
 Open the demo:
 
@@ -341,6 +353,47 @@ GetProductsResult[3]{id, name, price}:
 
 ---
 
+## ✦ Security & demo limitations
+
+> **The demo app is a reference implementation, not a production auth system.** The SDK packages (`@lite-toon/core`, `@lite-toon/auth`, …) provide building blocks; you are responsible for hardening them before exposing real user data.
+
+### What is safe to publish
+
+| Item | Notes |
+|---|---|
+| Source code in this repo | No API keys, `.env` files, or private keys are committed |
+| Demo OAuth client ID `lite-toon-demo` | Public identifier for Custom GPT / MCP setup — not a secret |
+| `secret-dummy-token` in `SecurityGatekeeper` | Placeholder for legacy API-key checks in samples — not a real credential |
+
+### Demo-only behaviors (do not deploy as-is)
+
+| Area | Demo behavior | Production expectation |
+|---|---|---|
+| **Login** | Username only — no password | Real identity provider or credential verification |
+| **OAuth tokens** | Generated with `Math.random()` | `crypto.randomBytes()` or a signed JWT strategy |
+| **Auth store** | In-memory (`InMemoryAuthStore`) | Redis, database, or managed IdP session store |
+| **Session cookie** | `httpOnly` + `sameSite: lax`, no `secure` flag | Set `secure: true` behind HTTPS |
+| **`POST /api/agent`** | Anonymous access allowed; only `getProducts` works without a user | Require Bearer tokens or API keys for all sensitive capabilities |
+| **`POST /api/demo`** | Auto-issues OAuth tokens for the interactive UI | Remove or protect behind auth in production |
+| **Rate limiting** | In-memory, per process | Shared store (e.g. Redis) across instances |
+
+### Endpoint auth summary
+
+| Path | Production guidance |
+|---|---|
+| `/api/tools/*`, `/api/mcp/message` | Always require OAuth Bearer + scopes (already enforced) |
+| `/api/oauth/*` | Replace in-memory store; validate redirect URIs for your domain |
+| `/api/agent` | Treat as internal unless you add `requireAuth` at the gatekeeper |
+| `/api/demo` | Disable or restrict to non-production environments |
+
+### Before you fork or deploy
+
+1. Copy [`.env.example`](.env.example) — never commit real secrets.
+2. Rotate any tokens if they were ever pasted into logs or chat tools.
+3. Review [`CONTRIBUTING.md`](CONTRIBUTING.md) for architecture rules and security expectations.
+
+---
+
 ## ✦ How the demo works
 
 ```mermaid
@@ -384,14 +437,13 @@ The built-in chat UI (`/api/demo`) simulates the AI decision layer locally and p
 
 ## ✦ Contributing
 
-PRs welcome — bug fixes, adapters, docs, hype.
+PRs welcome — bug fixes, adapters, docs, and tests.
 
-1. Fork the repo
-2. `git checkout -b feat/my-thing`
-3. Commit & push
-4. Open a Pull Request
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for setup, dependency rules, code style, and the pull request workflow.
 
-**Rule:** `packages/core` and `packages/toon` never import from adapters or frameworks. Demo code lives in `apps/demo/`.
+**Golden rule:** `packages/core` and `packages/toon` never import from adapters or frameworks. Demo code lives in `apps/demo/`.
+
+Licensed under [MIT](LICENSE).
 
 ---
 
