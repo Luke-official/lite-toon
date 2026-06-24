@@ -31,27 +31,27 @@ function buildAssistantMessage(action: string, params: Record<string, unknown>, 
   if (action === 'addToCart') {
     const product = PRODUCT_CATALOG.find((p) => p.id === params.productId);
     const qty = params.quantity as number;
-    return `Perfetto! Ho aggiunto ${qty}x ${product?.name ?? 'prodotto'} al carrello. Totale attuale: €${total.toFixed(2)}.`;
+    return `Done! I added ${qty}x ${product?.name ?? 'item'} to your cart. Current total: €${total.toFixed(2)}.`;
   }
 
   if (action === 'getCart') {
     if (lines.length === 0) {
-      return 'Il carrello è vuoto. Dimmi cosa vuoi aggiungere, ad esempio: "Aggiungi 2 paia di scarpe Nike al carrello".';
+      return 'Your cart is empty. Try something like: "Add 2 pairs of Nike shoes to my cart".';
     }
     const summary = lines.map((line) => `${line.quantity}x ${line.name}`).join(', ');
-    return `Ecco il tuo carrello: ${summary}. Totale: €${total.toFixed(2)}.`;
+    return `Here is your cart: ${summary}. Total: €${total.toFixed(2)}.`;
   }
 
   if (action === 'getProducts') {
     const list = PRODUCT_CATALOG.map((p) => `${p.name} (€${p.price})`).join(', ');
-    return `Questi sono i prodotti disponibili: ${list}.`;
+    return `Available products: ${list}.`;
   }
 
   if (action === 'clearCart') {
-    return 'Ho svuotato il carrello. Puoi ricominciare ad aggiungere prodotti quando vuoi.';
+    return 'I cleared your cart. You can start adding products again whenever you like.';
   }
 
-  return 'Operazione completata.';
+  return 'Done.';
 }
 
 function parseAdapterRecords(toonResponse: string): Record<string, unknown>[] {
@@ -138,33 +138,35 @@ export async function POST(req: NextRequest) {
     let params: Record<string, unknown> = {};
 
     const lowerMessage = message.toLowerCase();
-    if (lowerMessage.includes('aggiungi') && lowerMessage.includes('nike')) {
+    if (lowerMessage.includes('add') && lowerMessage.includes('nike')) {
       action = 'addToCart';
       const match = lowerMessage.match(/\d+/);
       params = { productId: 'p1', quantity: match ? parseInt(match[0], 10) : 1 };
-    } else if (lowerMessage.includes('aggiungi') && lowerMessage.includes('adidas')) {
+    } else if (lowerMessage.includes('add') && lowerMessage.includes('adidas')) {
       action = 'addToCart';
       const match = lowerMessage.match(/\d+/);
       params = { productId: 'p2', quantity: match ? parseInt(match[0], 10) : 1 };
-    } else if (lowerMessage.includes('aggiungi') && lowerMessage.includes('puma')) {
+    } else if (lowerMessage.includes('add') && lowerMessage.includes('puma')) {
       action = 'addToCart';
       const match = lowerMessage.match(/\d+/);
       params = { productId: 'p3', quantity: match ? parseInt(match[0], 10) : 1 };
-    } else if (lowerMessage.includes('prodott')) {
+    } else if (lowerMessage.includes('product') || lowerMessage.includes('catalog')) {
       action = 'getProducts';
     } else if (
-      lowerMessage.includes('svuota') ||
-      lowerMessage.includes('vuota') ||
-      lowerMessage.includes('svuotare') ||
-      lowerMessage.includes('empty cart')
+      lowerMessage.includes('clear cart') ||
+      lowerMessage.includes('empty cart') ||
+      lowerMessage === 'clear'
     ) {
       action = 'clearCart';
-    } else if (lowerMessage.includes('carrello')) {
+    } else if (
+      lowerMessage.includes('cart') &&
+      !lowerMessage.includes('add')
+    ) {
       action = 'getCart';
     } else {
       return NextResponse.json({
         error:
-          "Non ho capito. Prova con 'Aggiungi 2 paia di scarpe Nike al carrello', 'Mostra il carrello', 'Svuota carrello' o 'Mostra i prodotti'.",
+          "I didn't understand that. Try: 'Add 2 pairs of Nike shoes to my cart', 'Show my cart', 'Clear cart', or 'Show products'.",
       }, { status: 400 });
     }
 

@@ -39,15 +39,15 @@ function LoginForm() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-semibold text-zinc-900">Accedi a Lite-Toon Demo</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900">Sign in to Lite-Toon Demo</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Inserisci un nome utente per collegare il tuo carrello agli agent AI.
+          Enter a username to link your cart to AI agents.
         </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-zinc-700">
-              Nome utente
+              Username
             </label>
             <input
               id="username"
@@ -55,7 +55,7 @@ function LoginForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-zinc-900 outline-none focus:border-zinc-500"
-              placeholder="es. mario"
+              placeholder="e.g. alex"
               required
             />
           </div>
@@ -67,7 +67,7 @@ function LoginForm() {
             disabled={loading}
             className="w-full rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
           >
-            {loading ? 'Accesso in corso...' : 'Accedi'}
+            {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
       </div>

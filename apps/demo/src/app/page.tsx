@@ -48,7 +48,7 @@ export default function Home() {
     {
       role: "assistant",
       content:
-        'Ciao! Sono l\'assistente del negozio. Chiedimi di aggiungere prodotti al carrello o di svuotarlo con "Svuota carrello".',
+        'Hi! I\'m the shop assistant. Ask me to add products to your cart, or say "Clear cart" to empty it.',
     },
   ]);
   const [input, setInput] = useState("");
@@ -103,7 +103,7 @@ export default function Home() {
       if (!res.ok) {
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: data.error || "Si è verificato un errore." },
+          { role: "assistant", content: data.error || "An error occurred." },
         ]);
       } else {
         updateStoreState(data);
@@ -125,7 +125,7 @@ export default function Home() {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Errore di connessione al server." },
+        { role: "assistant", content: "Could not connect to the server." },
       ]);
     } finally {
       setIsLoading(false);
@@ -149,11 +149,11 @@ export default function Home() {
       <header className="border-b border-stone-200 bg-white px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">LiteShop</h1>
-          <p className="text-sm text-stone-500">Demo e-commerce con agente AI</p>
+          <p className="text-sm text-stone-500">AI agent e-commerce demo</p>
         </div>
         <div className="flex items-center gap-4">
           <a href="/connect" className="text-sm text-stone-600 underline hover:text-stone-900">
-            Collega AI
+            Connect AI
           </a>
           <div
             className={`flex items-center gap-3 rounded-full border px-4 py-2 transition-all ${
@@ -164,9 +164,9 @@ export default function Home() {
           >
           <span className="text-lg">🛒</span>
           <div className="text-right">
-            <p className="text-xs text-stone-500">Carrello</p>
+            <p className="text-xs text-stone-500">Cart</p>
             <p className="text-sm font-semibold">
-              {cartItemCount} {cartItemCount === 1 ? "articolo" : "articoli"} · {formatPrice(cartTotal)}
+              {cartItemCount} {cartItemCount === 1 ? "item" : "items"} · {formatPrice(cartTotal)}
             </p>
           </div>
         </div>
@@ -176,9 +176,9 @@ export default function Home() {
       <div className="flex flex-1 min-h-0">
         <main className="flex-1 overflow-y-auto p-6">
           <div className="mb-6">
-            <h2 className="text-lg font-medium">Catalogo</h2>
+            <h2 className="text-lg font-medium">Catalog</h2>
             <p className="text-sm text-stone-500">
-              Chiedi all&apos;assistente di aggiungere un prodotto: vedrai il carrello aggiornarsi in tempo reale.
+              Ask the assistant to add a product — the cart updates in real time.
             </p>
           </div>
 
@@ -194,7 +194,7 @@ export default function Home() {
                     <span className="text-3xl">{PRODUCT_EMOJI[product.id] ?? "📦"}</span>
                     {inCart > 0 && (
                       <span className="rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium px-2 py-1">
-                        Nel carrello: {inCart}
+                        In cart: {inCart}
                       </span>
                     )}
                   </div>
@@ -209,19 +209,19 @@ export default function Home() {
         <aside className="w-full max-w-sm border-l border-stone-200 bg-white flex flex-col min-h-0">
           <div className="p-4 border-b border-stone-200 flex items-center justify-between gap-2">
             <div>
-              <h2 className="font-medium">Il tuo carrello</h2>
+              <h2 className="font-medium">Your cart</h2>
               <p className="text-sm text-stone-500">
-                {cart.length === 0 ? "Ancora vuoto" : `${cartItemCount} articoli`}
+                {cart.length === 0 ? "Still empty" : `${cartItemCount} items`}
               </p>
             </div>
             {cart.length > 0 && (
               <button
                 type="button"
-                onClick={() => sendMessage("Svuota carrello")}
+                onClick={() => sendMessage("Clear cart")}
                 disabled={isLoading}
                 className="text-xs text-red-600 hover:text-red-700 border border-red-200 hover:border-red-300 rounded-lg px-2 py-1 disabled:opacity-50"
               >
-                Svuota
+                Clear
               </button>
             )}
           </div>
@@ -229,9 +229,9 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {cart.length === 0 ? (
               <div className="rounded-lg border border-dashed border-stone-200 p-6 text-center text-stone-400 text-sm">
-                Nessun prodotto nel carrello.
+                No items in your cart.
                 <br />
-                Prova: &quot;Aggiungi 2 paia di scarpe Nike al carrello&quot;
+                Try: &quot;Add 2 pairs of Nike shoes to my cart&quot;
               </div>
             ) : (
               cart.map((line) => (
@@ -257,11 +257,11 @@ export default function Home() {
               <span className="text-stone-500">Subtotale</span>
               <span className="font-semibold">{formatPrice(cartTotal)}</span>
             </div>
-            <p className="text-xs text-stone-400">Spedizione e checkout simulati per la demo.</p>
+            <p className="text-xs text-stone-400">Shipping and checkout are simulated for the demo.</p>
           </div>
 
           <div className="border-t border-stone-200 p-4 flex flex-col min-h-[280px]">
-            <h3 className="text-sm font-medium mb-3">Assistente AI</h3>
+            <h3 className="text-sm font-medium mb-3">AI assistant</h3>
             <div className="flex-1 overflow-y-auto space-y-2 mb-3 min-h-[120px] max-h-[180px]">
               {messages.map((msg, idx) => (
                 <div
@@ -277,7 +277,7 @@ export default function Home() {
               ))}
               {isLoading && (
                 <div className="text-sm rounded-lg px-3 py-2 bg-stone-100 text-stone-500 mr-6 animate-pulse">
-                  Sto elaborando...
+                  Working on it...
                 </div>
               )}
             </div>
@@ -286,7 +286,7 @@ export default function Home() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Scrivi un messaggio..."
+                placeholder="Type a message..."
                 className="flex-1 border border-stone-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-stone-400"
               />
               <button
@@ -294,7 +294,7 @@ export default function Home() {
                 disabled={isLoading || !input.trim()}
                 className="bg-stone-900 text-white px-3 py-2 rounded-lg text-sm hover:bg-stone-800 disabled:opacity-50"
               >
-                Invia
+                Send
               </button>
             </form>
           </div>
@@ -308,13 +308,13 @@ export default function Home() {
           className="w-full px-6 py-3 text-left text-sm flex items-center justify-between hover:bg-stone-800"
         >
           <span className="font-mono text-emerald-400">TOON System Log</span>
-          <span className="text-stone-500">{showToonLog ? "Nascondi" : "Mostra"} payload compressi</span>
+          <span className="text-stone-500">{showToonLog ? "Hide" : "Show"} compressed payloads</span>
         </button>
 
         {showToonLog && (
           <div className="max-h-64 overflow-y-auto px-6 pb-4 space-y-4 font-mono text-xs">
             {logs.length === 0 ? (
-              <p className="text-stone-500 italic">Invia un messaggio per vedere request/response TOON.</p>
+              <p className="text-stone-500 italic">Send a message to see TOON request/response payloads.</p>
             ) : (
               logs.map((log) => (
                 <div key={log.id} className="border border-stone-700 rounded-lg p-3 bg-black">

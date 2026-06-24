@@ -46,7 +46,7 @@ export function enrichCart(cart: CartItem[]): CartLine[] {
     const price = product?.price ?? 0;
     return {
       ...item,
-      name: product?.name ?? 'Prodotto sconosciuto',
+      name: product?.name ?? 'Unknown product',
       price,
       subtotal: price * item.quantity,
     };

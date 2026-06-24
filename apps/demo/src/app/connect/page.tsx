@@ -20,15 +20,15 @@ export default function ConnectPage() {
       <div className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-2">
           <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">Lite-Toon Demo</p>
-          <h1 className="text-3xl font-semibold text-zinc-900">Collega agent AI al negozio</h1>
+          <h1 className="text-3xl font-semibold text-zinc-900">Connect AI agents to the shop</h1>
           <p className="text-zinc-600">
-            Configurazione per merchant e sviluppatori. Gli utenti finali parlano solo con ChatGPT,
-            Gemini o Claude — non vedono questi dettagli tecnici.
+            Setup guide for merchants and developers. End users only talk to ChatGPT,
+            Gemini, or Claude — they never see these technical details.
           </p>
         </header>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-zinc-900">Endpoint condivisi</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">Shared endpoints</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <div>
               <dt className="font-medium text-zinc-700">OpenAPI</dt>
@@ -47,7 +47,7 @@ export default function ConnectPage() {
               <dd className="mt-1 font-mono text-zinc-600">cart:read cart:write</dd>
             </div>
             <div>
-              <dt className="font-medium text-zinc-700">Client ID demo</dt>
+              <dt className="font-medium text-zinc-700">Demo client ID</dt>
               <dd className="mt-1 font-mono text-zinc-600">lite-toon-demo</dd>
             </div>
           </dl>
@@ -56,37 +56,37 @@ export default function ConnectPage() {
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-zinc-900">ChatGPT (Custom GPT / Actions)</h2>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Crea un Custom GPT nel builder OpenAI.</li>
-            <li>In Actions, importa lo schema OpenAPI da <code className="font-mono">{openApiUrl}</code>.</li>
-            <li>Configura OAuth con authorization URL e token URL sopra.</li>
-            <li>Usa client ID <code className="font-mono">lite-toon-demo</code> e PKCE abilitato.</li>
-            <li>Al primo utilizzo, l&apos;utente verrà reindirizzato a <code className="font-mono">/login</code>.</li>
+            <li>Create a Custom GPT in the OpenAI builder.</li>
+            <li>In Actions, import the OpenAPI schema from <code className="font-mono">{openApiUrl}</code>.</li>
+            <li>Configure OAuth with the authorization and token URLs above.</li>
+            <li>Use client ID <code className="font-mono">lite-toon-demo</code> with PKCE enabled.</li>
+            <li>On first use, users are redirected to <code className="font-mono">/login</code>.</li>
           </ol>
         </section>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-zinc-900">Claude (MCP)</h2>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Connetti il client MCP all&apos;SSE endpoint: <code className="font-mono">{mcpSseUrl}</code></li>
-            <li>Il server invierà il message endpoint: <code className="font-mono">{mcpMessageUrl}</code></li>
-            <li>Invia richieste JSON-RPC con header <code className="font-mono">Authorization: Bearer &lt;token&gt;</code></li>
-            <li>Ottieni il token tramite il flusso OAuth sopra.</li>
+            <li>Connect your MCP client to the SSE endpoint: <code className="font-mono">{mcpSseUrl}</code></li>
+            <li>The server advertises the message endpoint: <code className="font-mono">{mcpMessageUrl}</code></li>
+            <li>Send JSON-RPC requests with header <code className="font-mono">Authorization: Bearer &lt;token&gt;</code></li>
+            <li>Obtain the token via the OAuth flow above.</li>
           </ol>
         </section>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-zinc-900">Gemini (Extensions / OpenAPI)</h2>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Importa lo stesso OpenAPI da <code className="font-mono">{openApiUrl}</code> in Google AI Studio o Gem.</li>
-            <li>Configura OAuth con gli stessi URL di ChatGPT.</li>
-            <li>Le function declarations sono equivalenti agli MCP tools esportati dal registry.</li>
+            <li>Import the same OpenAPI from <code className="font-mono">{openApiUrl}</code> in Google AI Studio or a Gem.</li>
+            <li>Configure OAuth with the same URLs as ChatGPT.</li>
+            <li>Function declarations match the MCP tools exported from the registry.</li>
           </ol>
         </section>
 
         <p className="text-sm text-zinc-500">
-          <a href="/" className="underline hover:text-zinc-700">Torna alla demo chat</a>
+          <a href="/" className="underline hover:text-zinc-700">Back to demo chat</a>
           {' · '}
-          <a href="/login" className="underline hover:text-zinc-700">Login OAuth</a>
+          <a href="/login" className="underline hover:text-zinc-700">OAuth login</a>
         </p>
       </div>
     </main>

@@ -44,7 +44,7 @@ Each user gets an isolated in-memory cart keyed by `userId`.
 5. Enable PKCE if prompted.
 6. Publish and share the GPT link with customers.
 
-Example user prompt: *"Aggiungi 2 paia di scarpe Nike al carrello"*.
+Example user prompt: *"Add 2 pairs of Nike shoes to my cart"*.
 
 ## Claude (MCP)
 

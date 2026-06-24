@@ -25,7 +25,7 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 ## ✦ The pitch
 
-> *"Aggiungi 2 paia di scarpe Nike al carrello."*
+> *"Add 2 pairs of Nike shoes to my cart."*
 
 That's it. That's what your customer types in ChatGPT. Lite-Toon handles the rest: OAuth login, scoped permissions, capability routing, per-user cart — and a response so compact your token bill notices.
 
@@ -35,7 +35,7 @@ Customer → ChatGPT / Claude / Gemini
               ↓  POST /api/tools/addToCart
 Lite-Toon   → validate user → execute capability → JSON or TOON
               ↓
-Customer ← "Perfetto! Ho aggiunto 2x Nike Shoes al carrello."
+Customer ← "Done! I added 2x Nike Shoes to your cart."
 ```
 
 **One registry. Three agent platforms. Zero duplicate integration work.**
@@ -203,7 +203,7 @@ Open the demo:
 
 Try in the chat UI:
 
-> *Aggiungi 2 paia di scarpe Nike al carrello*
+> *Add 2 pairs of Nike shoes to my cart*
 
 Watch the **System Log** panel light up with raw TOON payloads in real time.
 
@@ -404,7 +404,7 @@ sequenceDiagram
     participant API as LiteToon_API
     participant Cap as Capabilities
 
-    User->>AI: "Aggiungi 2 Nike al carrello"
+    User->>AI: "Add 2 Nike shoes to my cart"
     AI->>OAuth: Authorization Code + PKCE
     OAuth->>User: Login at /login
     OAuth-->>AI: access_token
