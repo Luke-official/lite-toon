@@ -11,13 +11,42 @@ export interface CartItem {
   quantity: number;
 }
 
-const productsDB: Product[] = [
+export interface CartLine extends CartItem {
+  name: string;
+  price: number;
+  subtotal: number;
+}
+
+export const PRODUCT_CATALOG: readonly Product[] = [
   { id: 'p1', name: 'Nike Shoes', price: 120 },
   { id: 'p2', name: 'Adidas T-Shirt', price: 35 },
   { id: 'p3', name: 'Puma Socks', price: 15 }
-];
+] as const;
+
+const productsDB: Product[] = [...PRODUCT_CATALOG];
 
 let cartDB: CartItem[] = [];
+
+export function enrichCart(cart: CartItem[]): CartLine[] {
+  return cart.map((item) => {
+    const product = productsDB.find((p) => p.id === item.productId);
+    const price = product?.price ?? 0;
+    return {
+      ...item,
+      name: product?.name ?? 'Prodotto sconosciuto',
+      price,
+      subtotal: price * item.quantity,
+    };
+  });
+}
+
+export function getCartTotal(cart: CartItem[]): number {
+  return enrichCart(cart).reduce((sum, line) => sum + line.subtotal, 0);
+}
+
+export function getCartItemCount(cart: CartItem[]): number {
+  return cart.reduce((sum, item) => sum + item.quantity, 0);
+}
 
 export const getProducts: Capability = {
   name: 'getProducts',
@@ -72,6 +101,18 @@ export const addToCart: Capability = {
       cartDB.push({ productId, quantity });
     }
 
+    return {
+      success: true,
+      data: cartDB
+    };
+  }
+};
+
+export const clearCart: Capability = {
+  name: 'clearCart',
+  description: 'Removes all items from the user cart.',
+  execute: async () => {
+    cartDB = [];
     return {
       success: true,
       data: cartDB
