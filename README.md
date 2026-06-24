@@ -2,60 +2,70 @@
 
 # Lite-Toon
 
-**Connect AI agents to your web app — with dramatically smaller payloads.**
+**Your web app, in every AI chat — ChatGPT, Claude, Gemini.**
 
-A framework-agnostic TypeScript SDK that lets ChatGPT, Claude, and other AI agents securely call your business logic through a highly compressed data format called **TOON** (Token-Oriented Object Notation).
+Turn any web application into something your users can drive with natural language. No API keys for them. No JSON for them. They just talk to the AI they already use every day.
+
+Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connects AI agents to your business logic — with **OAuth per-user auth**, **auto-generated OpenAPI & MCP schemas**, and **TOON**, a wire format that shrinks payloads by up to **70%**.
 
 <br/>
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-6366F1?style=for-the-badge)](https://modelcontextprotocol.io/)
+[![MCP](https://img.shields.io/badge/MCP-Ready-6366F1?style=for-the-badge)](https://modelcontextprotocol.io/)
+[![OAuth 2.0](https://img.shields.io/badge/OAuth_2.0-PKCE-22C55E?style=for-the-badge)](https://oauth.net/2/)
 
 <br/>
 
-[Quick Start](#-quick-start) · [TOON Format](#-what-is-toon) · [Architecture](#-architecture) · [Examples](#-examples) · [API Reference](#-api-reference)
+[Quick Start](#-quick-start) · [Connect Agents](#-connect-chatgpt-claude--gemini) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference)
 
 </div>
 
 ---
 
-## ✦ What is Lite-Toon?
+## ✦ The pitch
 
-Lite-Toon is an open-source **Universal Agent API** layer. It sits between your web application and AI agents, translating natural-language intent into structured actions — and returning results in a format optimized for token efficiency.
+> *"Aggiungi 2 paia di scarpe Nike al carrello."*
 
-Instead of shuttling verbose JSON back and forth, Lite-Toon uses **TOON**, a tabular notation that can reduce payload size by **40–70%** compared to equivalent JSON — saving tokens, latency, and cost on every agent interaction.
+That's it. That's what your customer types in ChatGPT. Lite-Toon handles the rest: OAuth login, scoped permissions, capability routing, per-user cart — and a response so compact your token bill notices.
 
 ```
-User says:  "Add 2 Nike shoes to my cart"
-     ↓
-AI decides:  addToCart({ productId: "p1", quantity: 2 })
-     ↓
-Lite-Toon:   validates → executes capability → returns TOON response
-     ↓
-AI reads:    Cart[1]{productId, quantity}:
-               p1, 2
+Customer → ChatGPT / Claude / Gemini
+              ↓  OAuth (once)
+              ↓  POST /api/tools/addToCart
+Lite-Toon   → validate user → execute capability → JSON or TOON
+              ↓
+Customer ← "Perfetto! Ho aggiunto 2x Nike Shoes al carrello."
 ```
 
-### Why it matters
+**One registry. Three agent platforms. Zero duplicate integration work.**
 
-| Problem | Lite-Toon solution |
+| Agent | How it connects | What Lite-Toon generates |
+|---|---|---|
+| **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
+| **Claude** | MCP over SSE + JSON-RPC | MCP tool schemas |
+| **Gemini** | Extensions / Gems + OpenAPI | Gemini function declarations |
+
+---
+
+## ✦ Why Lite-Toon?
+
+| Pain | Fix |
 |---|---|
-| AI agents need structured access to your app | Register **capabilities** — typed functions the agent can call |
-| JSON payloads waste tokens on every round-trip | **TOON** compresses tabular data into a minimal text format |
-| Security is hard to get right | Built-in **SecurityGatekeeper** with API key validation and rate limiting |
-| Every framework is different | **Framework-agnostic core** with pluggable adapters (Next.js included) |
-| Claude and MCP need tool schemas | **Auto-generated MCP tool definitions** from your capability registry |
+| "We need an AI chatbot" | Your users already have one — plug into **theirs** |
+| JSON eats tokens on every call | **TOON** compresses tabular data 40–70% |
+| Who is this user? Whose cart? | **OAuth 2.0 + PKCE** with per-user `ExecutionContext` |
+| ChatGPT, Claude, Gemini = 3 integrations | **One `CapabilityRegistry`**, three auto-exports |
+| Security nightmares | `SecurityGatekeeper` — rate limits, scopes, token resolution |
+| Framework lock-in | Pure TS core; Next.js adapter ships today |
 
 ---
 
 ## ✦ What is TOON?
 
-**TOON** (Token-Oriented Object Notation) is a compact, human-readable format designed for AI agent communication. It represents arrays of objects as a typed header followed by comma-separated rows — similar to CSV with a schema declaration.
+**TOON** (Token-Oriented Object Notation) is a compact, human-readable format built for agent round-trips. Arrays of objects become a typed header + rows — like CSV with a schema, designed for LLM consumption.
 
-### JSON vs TOON
-
-**JSON** — 142 characters:
+**JSON** — 142 chars:
 
 ```json
 [
@@ -65,7 +75,7 @@ AI reads:    Cart[1]{productId, quantity}:
 ]
 ```
 
-**TOON** — 98 characters (~31% smaller):
+**TOON** — 98 chars (~31% smaller):
 
 ```
 Users[3]{id, name, role}:
@@ -74,82 +84,80 @@ Users[3]{id, name, role}:
   u3, "Charlie", editor
 ```
 
-### Format specification
-
-```
-EntityName[count]{field1, field2, field3}:
-  value1, value2, value3
-  value1, value2, value3
-```
-
-| Element | Description |
-|---|---|
-| `EntityName` | The entity type (e.g. `Users`, `Cart`, `Action`) |
-| `[count]` | Number of records in the payload |
-| `{fields}` | Comma-separated field names declared once in the header |
-| Rows | Indented values, one record per line |
-| Strings | Wrapped in double quotes, with `\"` escaping |
-| Primitives | `null`, `true`, `false`, and numbers are written literally |
+Use **TOON** on `/api/agent` for token-optimized direct integrations. Use **JSON** on `/api/tools/*` and MCP — because ChatGPT doesn't speak TOON (yet).
 
 ---
 
 ## ✦ Architecture
 
-Lite-Toon follows a strict **inward dependency** model: adapters depend on the core, never the reverse.
+Strict inward dependencies: adapters → core. Core imports nothing from frameworks.
 
 ```mermaid
 flowchart TB
+    subgraph users ["End Users"]
+        U["Talks in natural language"]
+    end
+
     subgraph agents ["AI Agents"]
-        GPT["Custom GPTs"]
-        Claude["Claude / MCP"]
+        GPT["ChatGPT"]
+        Claude["Claude MCP"]
+        Gemini["Gemini"]
     end
 
-    subgraph adapters ["Adapters (Framework-specific)"]
-        REST["Next.js REST Adapter"]
-        SSE["Next.js MCP SSE Adapter"]
+    subgraph network ["Demo API Layer"]
+        OpenAPI["GET /api/openapi.json"]
+        Tools["POST /api/tools/*"]
+        OAuth["OAuth authorize + token"]
+        MCPsse["GET /api/mcp/sse"]
+        MCPmsg["POST /api/mcp/message"]
+        Agent["POST /api/agent"]
     end
 
-    subgraph core ["Core (Framework-agnostic)"]
-        Agent["UniversalAgent"]
-        Registry["CapabilityRegistry"]
-        Security["SecurityGatekeeper"]
-        TOON["TOON Engine\nparser · formatter"]
+    subgraph packages ["@lite-toon/* Monorepo"]
+        Bridge["bridge — public SDK"]
+        Adapter["adapter-next"]
+        Auth["auth — OAuth + PKCE"]
+        Core["core — agent + registry"]
+        Toon["toon — parser + formatter"]
     end
 
-    subgraph app ["Your Application"]
-        Cap1["getProducts()"]
-        Cap2["addToCart()"]
-        Cap3["getCart()"]
+    subgraph app ["Your Business Logic"]
+        Cap["getProducts · getCart · addToCart"]
     end
 
-    GPT -->|"POST /api/agent"| REST
-    Claude -->|"GET /api/mcp/sse"| SSE
-    REST --> Agent
-    SSE --> Agent
-    Agent --> Security
-    Agent --> Registry
-    Agent --> TOON
-    Registry --> Cap1
-    Registry --> Cap2
-    Registry --> Cap3
+    U --> agents
+    GPT --> OpenAPI
+    GPT --> Tools
+    Gemini --> OpenAPI
+    Gemini --> Tools
+    Claude --> MCPsse
+    Claude --> MCPmsg
+    agents --> OAuth
+    Tools --> Adapter
+    MCPmsg --> Adapter
+    Agent --> Adapter
+    Adapter --> Auth
+    Adapter --> Core
+    Core --> Toon
+    Core --> Cap
+    Bridge --> Adapter
+    Bridge --> Auth
+    Bridge --> Core
 ```
 
-### Project structure
+### Monorepo layout
 
 ```
-lite-toon/                   # npm workspaces monorepo
+lite-toon/
 ├── packages/
-│   ├── toon/                # @lite-toon/toon — TOON parser & formatter
-│   ├── core/                # @lite-toon/core — UniversalAgent, registry, security
-│   ├── adapter-next/        # @lite-toon/adapter-next — Next.js handlers
-│   └── bridge/              # @lite-toon/bridge — public SDK entry point
+│   ├── toon/           @lite-toon/toon       — TOON parser & formatter
+│   ├── core/           @lite-toon/core       — UniversalAgent, registry, security
+│   ├── auth/           @lite-toon/auth       — OAuth 2.0 server + in-memory store
+│   ├── adapter-next/   @lite-toon/adapter-next — Next.js route factories
+│   └── bridge/         @lite-toon/bridge     — single import for app developers
 │
 └── apps/
-    └── demo/                # Next.js e-commerce PoC (consumes @lite-toon/bridge)
-        └── src/
-            ├── app/         # API routes & chat UI
-            ├── demo/        # Mock e-commerce capabilities
-            └── agent.ts     # Agent singleton for /api/agent
+    └── demo/           Next.js e-commerce PoC + /connect setup page
 ```
 
 ---
@@ -159,282 +167,242 @@ lite-toon/                   # npm workspaces monorepo
 ### Prerequisites
 
 - **Node.js** 18+
-- **npm**, yarn, pnpm, or bun
+- **npm** 10+ (workspaces)
 
-### Installation
-
-**For your own app (when published to npm):**
-
-```bash
-npm install @lite-toon/bridge
-```
-
-**To run the demo from source:**
+### Clone & run
 
 ```bash
 git clone https://github.com/Luke-official/lite-toon.git
 cd lite-toon
 npm install
 npm run build
+npm run dev:clean    # kills stale ports 3000–3002, then starts turbo dev
 ```
 
-### Run the demo
+Open the demo:
 
-```bash
-npm run dev
-```
+| URL | What |
+|---|---|
+| [localhost:3000](http://localhost:3000) | Interactive shop + TOON log panel |
+| [localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide for ChatGPT / Claude / Gemini |
+| [localhost:3000/login](http://localhost:3000/login) | OAuth login for agent users |
 
-Open [http://localhost:3000](http://localhost:3000) to see the interactive e-commerce chatbot. Type a message like:
+> Port already in use? `npm run kill-ports` frees 3000, 3001, and 3002.
+
+Try in the chat UI:
 
 > *Aggiungi 2 paia di scarpe Nike al carrello*
 
-The right panel shows the raw **TOON request and response** payloads in real time, so you can see exactly how much data travels between the AI and your app.
+Watch the **System Log** panel light up with raw TOON payloads in real time.
 
-### Test the agent API
+### Run tests
 
 With the dev server running:
 
 ```bash
-npm run test:api
+npm run test:api    -w @lite-toon/demo   # TOON via /api/agent
+npm run test:oauth  -w @lite-toon/demo   # full OAuth + tools flow
+npm run test:mcp    -w @lite-toon/demo   # MCP initialize + tools/call
 ```
+
+---
+
+## ✦ Connect ChatGPT, Claude & Gemini
+
+Full walkthrough: [`docs/connect-agents.md`](docs/connect-agents.md)
+
+**For merchants (5-minute setup):**
+
+1. Deploy the demo (or your app wired with Lite-Toon).
+2. Open `/connect` — copy the OpenAPI URL and OAuth endpoints.
+3. **ChatGPT:** Custom GPT → Import Actions from `/api/openapi.json` → OAuth with PKCE.
+4. **Claude:** MCP client → SSE at `/api/mcp/sse` → Bearer token from OAuth.
+5. **Gemini:** Import the same OpenAPI → same OAuth config.
+
+**For end users:** share a link to your Custom GPT or Gem. They talk, they shop. Done.
+
+Demo OAuth client ID: `lite-toon-demo` · Scopes: `cart:read cart:write`
 
 ---
 
 ## ✦ Examples
 
-### 1. Register a capability
-
-Capabilities are the building blocks of your agent API. Each one is a named function with an optional JSON Schema for MCP compatibility.
+### 1. Register capabilities (with user context + scopes)
 
 ```typescript
-import { UniversalAgent, Capability } from '@lite-toon/bridge';
+import { UniversalAgent, Capability, ExecutionContext } from '@lite-toon/bridge';
+import { OAuthServer, InMemoryAuthStore } from '@lite-toon/bridge';
 
-const getProducts: Capability = {
-  name: 'getProducts',
-  description: 'Returns the list of available products.',
-  execute: async () => ({
-    success: true,
-    data: [
-      { id: 'p1', name: 'Nike Shoes', price: 120 },
-      { id: 'p2', name: 'Adidas T-Shirt', price: 35 },
-    ],
-  }),
-};
+const oauth = new OAuthServer({
+  store: new InMemoryAuthStore(),
+  clientId: 'my-app',
+  allowedRedirectUris: ['https://chat.openai.com/aip/oauth/callback'],
+});
 
 const addToCart: Capability = {
   name: 'addToCart',
   description: 'Adds a product to the user cart.',
+  scopes: ['cart:write'],
   schema: {
     type: 'object',
     properties: {
       productId: { type: 'string' },
-      quantity:  { type: 'number' },
+      quantity: { type: 'number' },
     },
     required: ['productId', 'quantity'],
   },
-  execute: async ({ productId, quantity }) => {
-    // your business logic here
-    return { success: true, data: [{ productId, quantity }] };
+  execute: async (params, context?: ExecutionContext) => {
+    const userId = context!.userId;
+    // your per-user business logic here
+    return { success: true, data: { userId, ...params } };
   },
 };
 
 const agent = new UniversalAgent({
-  capabilities: [getProducts, addToCart],
+  tokenResolver: oauth,
+  capabilities: [addToCart],
 });
 ```
 
-### 2. Wire up a Next.js API route
-
-Route files stay thin — all logic lives in the adapter and core.
+### 2. Wire Next.js routes (thin intercoms)
 
 ```typescript
-// app/api/agent/route.ts
+// app/api/agent/route.ts       — TOON/JSON direct access
 import { createNextAgentHandler } from '@lite-toon/bridge/next';
-import { agent } from '@/agent';
-
 export const POST = createNextAgentHandler(agent);
+
+// app/api/tools/[name]/route.ts — ChatGPT & Gemini Actions
+import { createNextToolsHandler } from '@lite-toon/bridge/next';
+const handler = createNextToolsHandler(agent);
+export const POST = (req, ctx) => handler(req, ctx);
+
+// app/api/mcp/message/route.ts  — Claude MCP
+import { createMCPMessageHandler } from '@lite-toon/bridge/next';
+export const POST = createMCPMessageHandler(agent);
 ```
 
-### 3. Send a TOON request
+### 3. Auto-export schemas (one registry, three formats)
+
+```typescript
+agent.registry.exportMcpTools();                  // → Claude MCP
+agent.registry.exportOpenApiDocument({ ... });    // → ChatGPT & Gemini
+agent.registry.exportGeminiFunctionDeclarations(); // → Gemini API
+```
+
+### 4. TOON in action
 
 ```bash
 curl -X POST http://localhost:3000/api/agent \
   -H "Content-Type: text/plain" \
-  -H "x-agent-id: my-gpt" \
+  -H "x-agent-id: my-agent" \
   -d 'request[1]{action, params}:
-  "getUsers", "{}"'
+  "getProducts", "{}"'
 ```
 
-**Response:**
-
 ```
-GetUsersResult[3]{id, name, role}:
-  u1, "Alice", admin
-  u2, "Bob", user
-  u3, "Charlie", editor
-```
-
-### 4. Send a JSON request (also supported)
-
-The REST adapter accepts both TOON and JSON payloads:
-
-```bash
-curl -X POST http://localhost:3000/api/agent \
-  -H "Content-Type: application/json" \
-  -d '{"action": "addToCart", "params": {"productId": "p1", "quantity": 2}}'
-```
-
-**Response (TOON):**
-
-```
-AddToCartResult[1]{productId, quantity}:
-  p1, 2
-```
-
-### 5. Export MCP tool schemas
-
-Registered capabilities are automatically translated into MCP-compatible tool definitions:
-
-```typescript
-const tools = agent.registry.exportMcpTools();
-// → [{ name: "addToCart", description: "...", inputSchema: { ... } }, ...]
-```
-
-### 6. Use the TOON engine directly
-
-The parser and formatter are pure TypeScript — no framework required.
-
-```typescript
-import { formatToon, parseToon } from '@lite-toon/bridge';
-// or: import { formatToon, parseToon } from '@lite-toon/bridge/toon';
-
-const toon = formatToon('Products', [
-  { id: 'p1', name: 'Nike Shoes', price: 120 },
-]);
-
-console.log(toon);
-// Products[1]{id, name, price}:
-//   p1, "Nike Shoes", 120
-
-const result = parseToon(toon);
-// { success: true, data: { entity: 'Products', records: [...] } }
+GetProductsResult[3]{id, name, price}:
+  "p1", "Nike Shoes", 120
+  "p2", "Adidas T-Shirt", 35
+  "p3", "Puma Socks", 15
 ```
 
 ---
 
 ## ✦ API Reference
 
-### Endpoints
+### Endpoints (demo app)
 
-| Method | Path | Description |
+| Method | Path | Auth | Format | Consumer |
+|---|---|---|---|---|
+| `POST` | `/api/tools/{name}` | OAuth Bearer | JSON | ChatGPT, Gemini |
+| `GET` | `/api/openapi.json` | — | OpenAPI 3.1 | Action schema import |
+| `GET` | `/api/oauth/authorize` | Session | redirect | OAuth flow |
+| `POST` | `/api/oauth/token` | — | JSON | OAuth PKCE exchange |
+| `POST` | `/api/mcp/message` | OAuth Bearer | JSON-RPC | Claude MCP |
+| `GET` | `/api/mcp/sse` | — | SSE | Claude MCP stream |
+| `POST` | `/api/agent` | Optional | TOON / JSON | Direct integrations |
+| `POST` | `/api/demo` | Demo token | JSON + TOON log | Interactive UI |
+
+### Headers
+
+| Header | When | Description |
 |---|---|---|
-| `POST` | `/api/agent` | REST/Webhook endpoint for Custom GPTs and direct TOON/JSON calls |
-| `POST` | `/api/demo` | Interactive demo — accepts natural language, returns TOON payloads |
-| `GET` | `/api/mcp/sse` | MCP Server-Sent Events stream (Claude integration) |
-| `POST` | `/api/mcp/message` | MCP JSON-RPC message handler |
+| `Authorization: Bearer <token>` | Tools, MCP | OAuth access token (user-scoped) |
+| `x-agent-id` | Always recommended | Rate-limit key + audit trail |
+| `Content-Type: text/plain` | `/api/agent` | TOON request body |
+| `Accept: application/json` | `/api/agent` | JSON response instead of TOON |
 
-### Request headers
+### Security stack
 
-| Header | Required | Description |
-|---|---|---|
-| `Content-Type` | Yes | `text/plain` for TOON, `application/json` for JSON |
-| `x-agent-id` | Recommended | Identifier for rate limiting and auditing |
-| `Authorization` | Optional | `Bearer <api-key>` for authenticated access |
-
-### Security
-
-The `SecurityGatekeeper` validates every request before execution:
-
-- **API key validation** — rejects requests with invalid tokens
-- **Rate limiting** — configurable per-agent request limits (default: 100 req/min)
-- **Pluggable store** — swap the in-memory limiter for Redis or any custom backend
-
-```typescript
-import { SecurityGatekeeper, InMemoryRateLimiterStore } from '@lite-toon/bridge';
-
-const gatekeeper = new SecurityGatekeeper(
-  new InMemoryRateLimiterStore(60_000), // 1-minute window
-  50 // max 50 requests per window
-);
-
-await gatekeeper.checkAccess({
-  agentId: 'my-agent',
-  apiKey: 'secret-dummy-token',
-  ip: '192.168.1.1',
-});
-```
-
-### Error responses
-
-Errors are returned in TOON format so the calling agent can parse and self-correct:
-
-```
-error[1]{message}:
-  "Capability 'unknownAction' not found or not implemented yet."
-```
+- **OAuth 2.0 + PKCE** — users authenticate once; agents get scoped tokens
+- **Per-user `ExecutionContext`** — `userId` + `scopes` on every capability call
+- **Rate limiting** — configurable per `agentId` (default 100 req/min)
+- **Scope enforcement** — capabilities declare required scopes (`cart:read`, `cart:write`)
 
 ---
 
 ## ✦ How the demo works
 
-The included e-commerce PoC demonstrates the full end-to-end flow:
-
 ```mermaid
 sequenceDiagram
     participant User
-    participant UI as Chat UI
-    participant Demo as /api/demo
-    participant Adapter as Next.js Adapter
-    participant Core as UniversalAgent
-    participant DB as Mock Store
+    participant AI as ChatGPT_Claude_Gemini
+    participant OAuth as OAuthServer
+    participant API as LiteToon_API
+    participant Cap as Capabilities
 
-    User->>UI: "Aggiungi 2 Nike al carrello"
-    UI->>Demo: POST { message }
-    Demo->>Demo: Mock AI decision → addToCart
-    Demo->>Adapter: TOON request payload
-    Adapter->>Core: Security check + execute
-    Core->>DB: addToCart({ p1, 2 })
-    DB-->>Core: updated cart
-    Core-->>Adapter: TOON response
-    Adapter-->>Demo: Cart[1]{...}
-    Demo-->>UI: { toonRequest, toonResponse, aiDecision }
-    UI-->>User: Chat reply + System Log
+    User->>AI: "Aggiungi 2 Nike al carrello"
+    AI->>OAuth: Authorization Code + PKCE
+    OAuth->>User: Login at /login
+    OAuth-->>AI: access_token
+    AI->>API: POST /api/tools/addToCart + Bearer
+    API->>Cap: execute(params, userContext)
+    Cap-->>API: user cart
+    API-->>AI: JSON result
+    AI-->>User: Natural language reply
 ```
+
+The built-in chat UI (`/api/demo`) simulates the AI decision layer locally and pipes requests through the same adapter — with a live TOON log so you can see the wire format in action.
 
 ---
 
 ## ✦ Roadmap
 
-- [x] Framework-agnostic core (TOON engine, registry, security)
-- [x] Next.js REST adapter
-- [x] Next.js MCP SSE adapter
-- [x] MCP tool schema auto-generation
-- [x] Interactive e-commerce demo with TOON log panel
-- [ ] MCP message handler (`/api/mcp/message`)
+- [x] Framework-agnostic core (`@lite-toon/core`, `@lite-toon/toon`)
+- [x] Monorepo with `@lite-toon/*` workspaces + Turbo
+- [x] Next.js adapters (REST, MCP SSE, MCP message, tools, OpenAPI, OAuth)
+- [x] OAuth 2.0 user auth with per-user carts
+- [x] ChatGPT + Gemini via auto-generated OpenAPI
+- [x] Claude via full MCP JSON-RPC handler
+- [x] Interactive demo + `/connect` merchant guide
+- [ ] Publish `@lite-toon/bridge` to npm
 - [ ] Express / Hono / Edge adapters
-- [x] Monorepo with publishable `@lite-toon/*` packages
-- [ ] npm registry publish (`@lite-toon/bridge`)
-- [ ] Redis-backed rate limiter example
+- [ ] Redis-backed auth store + rate limiter
+- [ ] Scenario B — real LLM in `/api/demo`
 
 ---
 
 ## ✦ Contributing
 
-Contributions are welcome. Whether it's a bug fix, a new adapter, or improved documentation — PRs are appreciated.
+PRs welcome — bug fixes, adapters, docs, hype.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/my-feature`)
-3. Commit your changes
-4. Push and open a Pull Request
+1. Fork the repo
+2. `git checkout -b feat/my-thing`
+3. Commit & push
+4. Open a Pull Request
 
-Please keep the architectural boundary intact: **`packages/core` and `packages/toon` must never import from adapters or frameworks.** Demo app code lives in `apps/demo/`.
+**Rule:** `packages/core` and `packages/toon` never import from adapters or frameworks. Demo code lives in `apps/demo/`.
 
 ---
 
 <div align="center">
 
-Built with precision for the age of AI agents.
+**The age of AI agents is here. Your app should be in the conversation.**
 
-**Lite-Toon** — less tokens, more action.
+Lite-Toon — *less tokens, more action, every agent.*
+
+<br/>
+
+[⭐ Star us on GitHub](https://github.com/Luke-official/lite-toon) · [Read the connect guide](docs/connect-agents.md)
 
 </div>
