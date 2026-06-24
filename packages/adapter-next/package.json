@@ -1,0 +1,30 @@
+{
+  "name": "@lite-toon/adapter-next",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@lite-toon/auth": "*",
+    "@lite-toon/core": "*",
+    "@lite-toon/toon": "*"
+  },
+  "peerDependencies": {
+    "next": ">=14"
+  },
+  "devDependencies": {
+    "next": "16.2.9",
+    "typescript": "^5"
+  }
+}

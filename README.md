@@ -137,30 +137,19 @@ flowchart TB
 ### Project structure
 
 ```
-src/
-├── core/                    # Framework-agnostic — zero external deps
-│   ├── toon/
-│   │   ├── formatter.ts     # JS objects → TOON strings
-│   │   └── parser.ts        # TOON strings → JS objects
-│   ├── agent.ts             # UniversalAgent hub
-│   ├── registry.ts          # CapabilityRegistry + MCP schema export
-│   ├── security.ts          # SecurityGatekeeper + rate limiting
-│   └── types.ts             # AgentRequest, Capability, etc.
+lite-toon/                   # npm workspaces monorepo
+├── packages/
+│   ├── toon/                # @lite-toon/toon — TOON parser & formatter
+│   ├── core/                # @lite-toon/core — UniversalAgent, registry, security
+│   ├── adapter-next/        # @lite-toon/adapter-next — Next.js handlers
+│   └── bridge/              # @lite-toon/bridge — public SDK entry point
 │
-├── adapters/
-│   └── nextjs/
-│       ├── rest.ts          # createNextAgentHandler()
-│       └── sse.ts           # createMCPSseHandler()
-│
-├── demo/
-│   └── capabilities.ts      # E-commerce PoC capabilities
-│
-└── app/
-    ├── api/
-    │   ├── agent/route.ts   # REST endpoint for Custom GPTs
-    │   ├── demo/route.ts    # Interactive chatbot demo
-    │   └── mcp/             # MCP SSE + message endpoints
-    └── page.tsx             # Live demo UI with TOON log panel
+└── apps/
+    └── demo/                # Next.js e-commerce PoC (consumes @lite-toon/bridge)
+        └── src/
+            ├── app/         # API routes & chat UI
+            ├── demo/        # Mock e-commerce capabilities
+            └── agent.ts     # Agent singleton for /api/agent
 ```
 
 ---
@@ -174,10 +163,19 @@ src/
 
 ### Installation
 
+**For your own app (when published to npm):**
+
+```bash
+npm install @lite-toon/bridge
+```
+
+**To run the demo from source:**
+
 ```bash
 git clone https://github.com/Luke-official/lite-toon.git
 cd lite-toon
 npm install
+npm run build
 ```
 
 ### Run the demo
@@ -209,8 +207,7 @@ npm run test:api
 Capabilities are the building blocks of your agent API. Each one is a named function with an optional JSON Schema for MCP compatibility.
 
 ```typescript
-import { UniversalAgent } from '@/core/agent';
-import { Capability } from '@/core/types';
+import { UniversalAgent, Capability } from '@lite-toon/bridge';
 
 const getProducts: Capability = {
   name: 'getProducts',
@@ -251,8 +248,8 @@ const agent = new UniversalAgent({
 Route files stay thin — all logic lives in the adapter and core.
 
 ```typescript
-// src/app/api/agent/route.ts
-import { createNextAgentHandler } from '@/adapters/nextjs/rest';
+// app/api/agent/route.ts
+import { createNextAgentHandler } from '@lite-toon/bridge/next';
 import { agent } from '@/agent';
 
 export const POST = createNextAgentHandler(agent);
@@ -308,8 +305,8 @@ const tools = agent.registry.exportMcpTools();
 The parser and formatter are pure TypeScript — no framework required.
 
 ```typescript
-import { formatToon } from '@/core/toon/formatter';
-import { parseToon } from '@/core/toon/parser';
+import { formatToon, parseToon } from '@lite-toon/bridge';
+// or: import { formatToon, parseToon } from '@lite-toon/bridge/toon';
 
 const toon = formatToon('Products', [
   { id: 'p1', name: 'Nike Shoes', price: 120 },
@@ -353,7 +350,7 @@ The `SecurityGatekeeper` validates every request before execution:
 - **Pluggable store** — swap the in-memory limiter for Redis or any custom backend
 
 ```typescript
-import { SecurityGatekeeper, InMemoryRateLimiterStore } from '@/core/security';
+import { SecurityGatekeeper, InMemoryRateLimiterStore } from '@lite-toon/bridge';
 
 const gatekeeper = new SecurityGatekeeper(
   new InMemoryRateLimiterStore(60_000), // 1-minute window
@@ -415,7 +412,8 @@ sequenceDiagram
 - [x] Interactive e-commerce demo with TOON log panel
 - [ ] MCP message handler (`/api/mcp/message`)
 - [ ] Express / Hono / Edge adapters
-- [ ] npm package publish
+- [x] Monorepo with publishable `@lite-toon/*` packages
+- [ ] npm registry publish (`@lite-toon/bridge`)
 - [ ] Redis-backed rate limiter example
 
 ---
@@ -429,7 +427,7 @@ Contributions are welcome. Whether it's a bug fix, a new adapter, or improved do
 3. Commit your changes
 4. Push and open a Pull Request
 
-Please keep the architectural boundary intact: **`src/core/` must never import from adapters or frameworks.**
+Please keep the architectural boundary intact: **`packages/core` and `packages/toon` must never import from adapters or frameworks.** Demo app code lives in `apps/demo/`.
 
 ---
 

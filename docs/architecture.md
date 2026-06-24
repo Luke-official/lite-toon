@@ -1,30 +1,40 @@
-ai-agent-layer/
-├── src/
-│   ├── app/
-│   │   └── api/
-│   │       ├── mcp/                 # [NETWORK LEVEL] Contact point for Claude/MCP
-│   │       │   ├── sse/route.ts     # Handles the open streaming connection
-│   │       │   └── message/route.ts # Receives JSON-RPC commands
-│   │       └── agent/               # [NETWORK LEVEL] Direct test point for Custom GPTs
-│   │           └── route.ts         
+lite-toon/
+├── packages/
+│   ├── toon/                    # @lite-toon/toon — [TRANSLATION LEVEL] TOON engine
+│   │   └── src/
+│   │       ├── parser.ts        # TOON string → JS Object
+│   │       ├── formatter.ts     # JS Object/Array → TOON string
+│   │       └── types.ts
 │   │
-│   ├── core/
-│   │   ├── toon/                    # [TRANSLATION LEVEL] The TOON engine
-│   │   │   ├── parser.ts            # TOON string to JS Object
-│   │   │   ├── formatter.ts         # JS Object/Array to TOON string
-│   │   │   └── types.ts             # TOON types
-│   │   ├── types.ts                 # [TYPE LEVEL] Universal Agent API contracts
-│   │   └── registry.ts              # [ROUTING LEVEL] CapabilityRegistry class
+│   ├── core/                    # @lite-toon/core — framework-agnostic agent core
+│   │   └── src/
+│   │       ├── agent.ts         # UniversalAgent hub
+│   │       ├── registry.ts      # CapabilityRegistry + MCP schema export
+│   │       ├── security.ts      # SecurityGatekeeper + rate limiting
+│   │       └── types.ts         # AgentRequest, Capability, etc.
 │   │
-│   ├── lib/
-│   │   ├── mcp/                     # [TRANSLATION LEVEL] Protocol Adapter
-│   │   │   ├── server.ts            # Initializes the MCP server
-│   │   │   └── registry.ts          # Maps internal tools to the schema required by the AI
-│   │   │
-│   │   └── security/                # [SECURITY LEVEL] 
-│   │       ├── auth.ts              # Token validation (OAuth/API keys)
-│   │       └── rate-limit.ts        # Protection against infinite AI loops
+│   ├── adapter-next/            # @lite-toon/adapter-next — Next.js transport
+│   │   └── src/
+│   │       ├── rest.ts          # createNextAgentHandler()
+│   │       └── sse.ts           # createMCPSseHandler()
 │   │
-│   └── types/                       # [TYPE LEVEL] Interface contracts
-│       ├── toon.d.ts                # Types for TOON payloads
-│       └── mcp.d.ts                 # Types for MCP requests
+│   └── bridge/                  # @lite-toon/bridge — public SDK facade
+│       └── src/
+│           ├── index.ts         # re-exports core + toon
+│           ├── toon.ts          # @lite-toon/bridge/toon
+│           └── next.ts          # @lite-toon/bridge/next
+│
+└── apps/
+    └── demo/                    # Next.js PoC — consumes @lite-toon/bridge
+        └── src/
+            ├── app/
+            │   └── api/
+            │       ├── mcp/                 # [NETWORK LEVEL] Claude/MCP
+            │       │   ├── sse/route.ts
+            │       │   └── message/route.ts
+            │       ├── agent/route.ts       # [NETWORK LEVEL] Custom GPTs
+            │       └── demo/route.ts        # Interactive chatbot demo
+            ├── demo/
+            │   └── capabilities.ts          # Mock e-commerce capabilities
+            ├── agent.ts                     # Agent singleton
+            └── types/                       # App-specific type declarations

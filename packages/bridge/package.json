@@ -1,0 +1,35 @@
+{
+  "name": "@lite-toon/bridge",
+  "version": "0.1.0",
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./toon": {
+      "types": "./dist/toon.d.ts",
+      "import": "./dist/toon.js"
+    },
+    "./next": {
+      "types": "./dist/next.d.ts",
+      "import": "./dist/next.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@lite-toon/adapter-next": "*",
+    "@lite-toon/auth": "*",
+    "@lite-toon/core": "*",
+    "@lite-toon/toon": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

@@ -2,26 +2,23 @@
   "name": "lite-toon",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "test:api": "node scripts/test-api.js"
-  },
-  "dependencies": {
-    "next": "16.2.9",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "kill-ports": "kill-port 3000 3001 3002",
+    "dev:clean": "npm run kill-ports && npm run dev",
+    "test:api": "npm run test:api -w @lite-toon/demo"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.9",
-    "tailwindcss": "^4",
+    "kill-port": "^2.0.1",
+    "tsup": "^8.4.0",
+    "turbo": "^2.5.4",
     "typescript": "^5"
   }
 }
