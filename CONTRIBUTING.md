@@ -5,8 +5,10 @@ Thank you for your interest in contributing! Lite-Toon is a TypeScript monorepo 
 ## Before you start
 
 - Read the [README](README.md) for project goals and architecture.
-- Read [Security & demo limitations](README.md#-security--demo-limitations) — the bundled demo is **not** production-ready auth.
-- For agent integration details, see [`docs/connect-agents.md`](docs/connect-agents.md) and [`docs/architecture.md`](docs/architecture.md).
+- Browse the [documentation index](docs/README.md) for the full guide library.
+- Read [Security](docs/security/overview.md) — the bundled demo is **not** production-ready auth.
+- For learning the codebase, start with the [Study Guide](docs/guide/study-guide.md).
+- For agent integration details, see [Connect Agents](docs/integration/connect-agents.md) and [Architecture](docs/architecture/overview.md).
 
 ## Development setup
 
@@ -63,10 +65,29 @@ lite-toon/
 
 ### Dependency rules (required)
 
+See [Architecture — dependency rules](docs/architecture/overview.md#package-dependency-graph) for the full graph.
+
 1. **`packages/core` and `packages/toon` must stay framework-agnostic.** No imports from `next/*`, `react`, `fs`, or other runtime-specific APIs unless explicitly scoped to a non-core package.
 2. **Adapters depend on core; core never depends on adapters.**
 3. **Demo routes in `apps/demo/src/app/api/` are thin intercoms.** Business logic belongs in capabilities (`apps/demo/src/demo/`) or in reusable packages — not in route files.
 4. **Public consumer imports use `@lite-toon/bridge`** (e.g. `import { UniversalAgent } from '@lite-toon/bridge'`).
+
+## Documentation
+
+When adding features, update the relevant doc in `docs/`:
+
+| Change type | Update |
+|---|---|
+| New capability pattern | [concepts/capabilities.md](docs/concepts/capabilities.md) |
+| New endpoint or header | [reference/api.md](docs/reference/api.md) |
+| New package export | [reference/packages.md](docs/reference/packages.md) |
+| Auth behavior change | [concepts/oauth.md](docs/concepts/oauth.md), [security/overview.md](docs/security/overview.md) |
+| MCP method support | [concepts/mcp.md](docs/concepts/mcp.md) |
+| TOON format change | [concepts/toon.md](docs/concepts/toon.md) |
+| Capability flow diagrams | [concepts/capability-flows.md](docs/concepts/capability-flows.md) |
+| Cheat sheet for a topic | [cheatsheets/](docs/cheatsheets/README.md) |
+
+Full index: [docs/README.md](docs/README.md)
 
 ## How to contribute
 

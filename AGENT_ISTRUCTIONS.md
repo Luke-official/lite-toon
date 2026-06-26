@@ -3,6 +3,8 @@
 You are a Senior Software Architect and an expert in TypeScript and Next.js.
 You are building a "Universal Agent API Layer", a middleware that allows AI Agents (like ChatGPT or Claude) to securely interact with existing webapps.
 
+**Full documentation:** see [`docs/README.md`](docs/README.md) and the [Study Guide](docs/guide/study-guide.md).
+
 ## Architecture and Constraints
 
 1. **Monorepo:** SDK code lives in `packages/`; the reference demo app lives in `apps/demo/`.

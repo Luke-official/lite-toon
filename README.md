@@ -17,7 +17,7 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 <br/>
 
-[Quick Start](#-quick-start) · [Connect Agents](#-connect-chatgpt-claude--gemini) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations)
+[Quick Start](#-quick-start) · [Documentation](docs/README.md) · [Connect Agents](#-connect-chatgpt-claude--gemini) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations)
 
 </div>
 
@@ -219,9 +219,33 @@ npm run test:mcp    -w @lite-toon/demo   # MCP initialize + tools/call
 
 ---
 
+## ✦ Documentation
+
+Full documentation lives in [`docs/`](docs/README.md):
+
+| Guide | Description |
+|---|---|
+| [Getting Started](docs/getting-started.md) | Install, run, test, first curl |
+| [Study Guide](docs/guide/study-guide.md) | 8-day learning path for the entire codebase |
+| [Architecture](docs/architecture/overview.md) | Monorepo layers, dependency rules, data flows |
+| [Capabilities](docs/concepts/capabilities.md) | Define and register agent tools |
+| [Next.js Integration](docs/integration/nextjs.md) | Wire Lite-Toon into your app |
+| [API Reference](docs/reference/api.md) | Every endpoint, header, and example |
+| [TOON Format](docs/concepts/toon.md) | Wire format specification |
+| [OAuth](docs/concepts/oauth.md) | PKCE flow, tokens, scopes |
+| [MCP](docs/concepts/mcp.md) | Claude integration protocol |
+| [Security](docs/security/overview.md) | Production hardening checklist |
+| [Packages](docs/reference/packages.md) | `@lite-toon/*` API surface |
+| [Demo App](docs/guide/demo-app.md) | Reference app walkthrough |
+| [Connect Agents](docs/integration/connect-agents.md) | ChatGPT, Claude, Gemini setup |
+| [Capability Flows](docs/concepts/capability-flows.md) | Per-capability sequence diagrams |
+| [Cheat Sheets](docs/cheatsheets/README.md) | Printable one-page quick refs |
+
+---
+
 ## ✦ Connect ChatGPT, Claude & Gemini
 
-Full walkthrough: [`docs/connect-agents.md`](docs/connect-agents.md)
+Full walkthrough: [`docs/integration/connect-agents.md`](docs/integration/connect-agents.md)
 
 **For merchants (5-minute setup):**
 
@@ -455,6 +479,6 @@ Lite-Toon — *less tokens, more action, every agent.*
 
 <br/>
 
-[⭐ Star us on GitHub](https://github.com/Luke-official/lite-toon) · [Read the connect guide](docs/connect-agents.md)
+[⭐ Star us on GitHub](https://github.com/Luke-official/lite-toon) · [Read the connect guide](docs/integration/connect-agents.md)
 
 </div>
