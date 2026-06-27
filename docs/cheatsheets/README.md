@@ -24,10 +24,12 @@ One-page quick references for every Lite-Toon topic. Designed to print or keep o
 ```
 YOU WRITE          →  Capability { name, description, schema, scopes, execute }
 YOU REGISTER       →  UniversalAgent({ tokenResolver, capabilities })
-SDK GENERATES      →  OpenAPI + MCP tools + Gemini declarations
-AGENTS CALL        →  /api/tools/*  |  /api/mcp/message  |  /api/agent
+SDK GENERATES      →  MCP tools (Claude) — OpenAPI/Gemini not supported yet
+AGENTS CALL        →  /api/mcp  |  /api/agent
 AUTH               →  OAuth 2.0 + PKCE → Bearer token → ExecutionContext
 ```
+
+> **Supported today:** Next.js App Router + Claude MCP. ChatGPT and Gemini **not supported yet** — coming soon.
 
 ## Import cheat line
 
@@ -47,9 +49,9 @@ import { createNextAgentHandler } from '@lite-toon/bridge/next';
 
 ## Transport picker
 
-| Need | Use |
-|---|---|
-| ChatGPT / Gemini | `GET /api/openapi.json` + `POST /api/tools/{name}` |
-| Claude | `GET /api/mcp/sse` + `POST /api/mcp/message` |
-| Token savings | `POST /api/agent` (TOON) |
-| Local UI test | `POST /api/demo` |
+| Need | Use | Status |
+|---|---|---|
+| **Claude** | `GET`+`POST /api/mcp` | ✅ Supported |
+| ChatGPT / Gemini | — | ❌ Not supported yet |
+| Token savings | `POST /api/agent` (TOON) | ✅ Supported |
+| Local UI test | `POST /api/demo` | ✅ Demo only |

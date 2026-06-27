@@ -132,16 +132,16 @@ Duplicate names log a warning and overwrite.
 
 ## Schema export (automatic)
 
-Once registered, capabilities appear in all export formats without additional code:
+Once registered, capabilities appear in export formats without additional code. **MCP export is supported today** (Claude). OpenAPI and Gemini exports exist in the SDK but those platforms are **not supported yet**.
 
 ```typescript
-// MCP tools for Claude
+// MCP tools for Claude (supported)
 agent.registry.exportMcpTools();
 
-// Gemini function declarations
+// Gemini function declarations (not supported yet)
 agent.registry.exportGeminiFunctionDeclarations();
 
-// OpenAPI 3.1 for ChatGPT Actions
+// OpenAPI 3.1 for ChatGPT Actions (not supported yet)
 agent.registry.exportOpenApiDocument({
   baseUrl: 'https://my-app.com',
   oauth: {

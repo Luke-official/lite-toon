@@ -2,16 +2,16 @@
 
 > **Cheat sheet:** [demo-app.md](../cheatsheets/demo-app.md)
 
-Walkthrough of `apps/demo` — the reference Next.js e-commerce proof-of-concept that showcases every Lite-Toon feature.
+Walkthrough of `apps/demo` — the reference **Next.js App Router** proof-of-concept for **Claude MCP**, OAuth, and TOON.
 
 ## Purpose
 
 The demo app is **not** a production shop. It exists to:
 
-1. Show how to wire all Lite-Toon routes in a Next.js App Router project
-2. Provide working OAuth, OpenAPI, MCP, and TOON endpoints for testing
+1. Show how to wire Lite-Toon routes in a Next.js App Router project
+2. Provide working OAuth, MCP (Streamable HTTP), and TOON endpoints for testing
 3. Simulate an AI chat interaction with a live TOON System Log
-4. Offer a merchant setup page at `/connect`
+4. Offer a merchant setup page at `/connect` (Claude only)
 
 ## File map
 
@@ -35,18 +35,25 @@ apps/demo/
         ├── globals.css
         ├── connect/page.tsx        # Merchant setup guide
         ├── login/page.tsx          # OAuth login form
+        ├── .well-known/
+        │   ├── oauth-protected-resource/route.ts
+        │   └── oauth-authorization-server/route.ts
         └── api/
             ├── agent/route.ts
             ├── demo/route.ts
+            ├── me/route.ts
+            ├── products/route.ts
             ├── openapi.json/route.ts
             ├── tools/[name]/route.ts
             ├── oauth/
             │   ├── authorize/route.ts
             │   ├── token/route.ts
-            │   └── login/route.ts
+            │   ├── login/route.ts
+            │   └── register/route.ts
             └── mcp/
-                ├── sse/route.ts
-                └── message/route.ts
+                ├── route.ts          # Streamable HTTP (Claude)
+                ├── sse/route.ts      # legacy
+                └── message/route.ts  # legacy
 ```
 
 ## Agent singleton
@@ -110,7 +117,15 @@ export const POST = (req, ctx) => handler(req, ctx);
 
 Dynamic `[name]` matches any registered capability.
 
-### `api/mcp/sse/route.ts` + `api/mcp/message/route.ts`
+### `api/mcp/route.ts` (Streamable HTTP)
+
+```typescript
+const handler = createMCPStreamableHttpHandler(agent);
+export const GET = handler;
+export const POST = handler;
+```
+
+### `api/mcp/sse/route.ts` + `api/mcp/message/route.ts` (legacy)
 
 ```typescript
 export const GET = createMCPSseHandler(agent);
@@ -123,6 +138,7 @@ export const POST = createMCPMessageHandler(agent);
 export const GET = createOAuthAuthorizeHandler({ oauth: oauthServer });
 export const POST = createOAuthTokenHandler({ oauth: oauthServer });
 export const POST = createOAuthLoginHandler({ oauth: oauthServer });
+export const POST = createOAuthRegisterHandler({ oauth: oauthServer });
 ```
 
 ### `api/openapi.json/route.ts`
@@ -162,7 +178,7 @@ The demo simulation route. **This is the only route with substantial logic** —
 `src/app/connect/page.tsx`:
 
 - Lists all endpoint URLs (dynamically from `window.location.origin`)
-- Step-by-step ChatGPT, Claude, Gemini setup instructions
+- Step-by-step **Claude** connector instructions only
 - Demo client ID and scopes
 
 ### `/login` — OAuth login
@@ -192,8 +208,9 @@ Full OAuth PKCE flow:
 
 ### `test-mcp.js`
 
-1. OAuth login as `mcp-test-user`
-2. `initialize` → `tools/list` → `tools/call addToCart`
+1. OAuth discovery (PRM + ASM)
+2. Streamable HTTP: `initialize` → `tools/list` → `tools/call addToCart`
+3. Legacy message endpoint: `tools/call getCart`
 
 ## Environment variables
 

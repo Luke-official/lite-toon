@@ -9,7 +9,6 @@ export default function ConnectPage() {
     setBaseUrl(window.location.origin);
   }, []);
 
-  const openApiUrl = `${baseUrl}/api/openapi.json`;
   const authorizeUrl = `${baseUrl}/api/oauth/authorize`;
   const tokenUrl = `${baseUrl}/api/oauth/token`;
   const registerUrl = `${baseUrl}/api/oauth/register`;
@@ -23,10 +22,13 @@ export default function ConnectPage() {
       <div className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-2">
           <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">Lite-Toon Demo</p>
-          <h1 className="text-3xl font-semibold text-zinc-900">Connect AI agents to the shop</h1>
+          <h1 className="text-3xl font-semibold text-zinc-900">Connect Claude to the shop</h1>
           <p className="text-zinc-600">
-            Setup guide for merchants and developers. End users only talk to ChatGPT,
-            Gemini, or Claude — they never see these technical details.
+            Setup guide for merchants and developers. End users talk to Claude — they never see these technical details.
+          </p>
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <strong>Early development:</strong> only <strong>Claude</strong> is supported today. ChatGPT and Gemini are{' '}
+            <strong>not supported yet</strong> — coming soon.
           </p>
         </header>
 
@@ -74,10 +76,6 @@ export default function ConnectPage() {
               <dd className="mt-1 break-all font-mono text-zinc-600">{authMetadataUrl}</dd>
             </div>
             <div>
-              <dt className="font-medium text-zinc-700">OpenAPI</dt>
-              <dd className="mt-1 break-all font-mono text-zinc-600">{openApiUrl}</dd>
-            </div>
-            <div>
               <dt className="font-medium text-zinc-700">OAuth authorize</dt>
               <dd className="mt-1 break-all font-mono text-zinc-600">{authorizeUrl}</dd>
             </div>
@@ -117,26 +115,6 @@ Rules:
 - Prices are in EUR
 - Each user has a private cart tied to their OAuth login`}
           </pre>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-zinc-900">ChatGPT (Custom GPT / Actions)</h2>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Create a Custom GPT in the OpenAI builder.</li>
-            <li>In Actions, import the OpenAPI schema from <code className="font-mono">{openApiUrl}</code>.</li>
-            <li>Configure OAuth with the authorization and token URLs above.</li>
-            <li>Use client ID <code className="font-mono">lite-toon-demo</code> with PKCE enabled.</li>
-            <li>On first use, users are redirected to <code className="font-mono">/login</code>.</li>
-          </ol>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-zinc-900">Gemini (Extensions / OpenAPI)</h2>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Import the same OpenAPI from <code className="font-mono">{openApiUrl}</code> in Google AI Studio or a Gem.</li>
-            <li>Configure OAuth with the same URLs as ChatGPT.</li>
-            <li>Function declarations match the MCP tools exported from the registry.</li>
-          </ol>
         </section>
 
         <p className="text-sm text-zinc-500">

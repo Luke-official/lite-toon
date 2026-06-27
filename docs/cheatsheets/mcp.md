@@ -1,13 +1,34 @@
 # MCP — Cheat Sheet
 
+> Primary transport for **Claude** — Streamable HTTP at `/api/mcp`
+
 ## Endpoints
 
 | Method | Path | Role |
 |---|---|---|
-| GET | `/api/mcp/sse` | Discovery stream |
-| POST | `/api/mcp/message` | JSON-RPC handler |
+| GET+POST | `/api/mcp` | Streamable HTTP (recommended) |
+| GET | `/api/mcp/sse` | Legacy discovery stream |
+| POST | `/api/mcp/message` | Legacy JSON-RPC handler |
 
-## Connection
+## OAuth discovery
+
+```
+GET  /.well-known/oauth-protected-resource
+GET  /.well-known/oauth-authorization-server
+POST /api/oauth/register
+```
+
+## Connection (Streamable HTTP)
+
+```
+1. Claude reads PRM + ASM on connect
+2. POST /api/mcp → initialize
+3. POST /api/mcp → tools/list
+4. OAuth → Bearer token
+5. POST /api/mcp → tools/call
+```
+
+## Legacy SSE connection
 
 ```
 1. GET /api/mcp/sse
@@ -23,20 +44,8 @@
 | `initialize` | No | server info |
 | `ping` | No | `{}` |
 | `tools/list` | No | tool schemas |
-| `tools/call` | **Bearer** | capability result |
+| `tools/call` | **Bearer** (scoped caps) | capability result |
 | `notifications/initialized` | No | 204 |
-
-## initialize
-
-```json
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"x","version":"1.0"}}}
-```
-
-## tools/list
-
-```json
-{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}
-```
 
 ## tools/call
 
@@ -76,14 +85,15 @@ Content-Type: application/json
 x-agent-id: mcp-client
 ```
 
-## vs OpenAPI tools
+## vs OpenAPI tools (not supported yet)
 
 | | MCP | OpenAPI tools |
 |---|---|---|
-| Consumer | Claude | ChatGPT, Gemini |
-| Protocol | JSON-RPC | REST POST |
-| Discovery | tools/list | openapi.json |
-| Same execute()? | ✅ | ✅ |
+| Status | ✅ Claude | ❌ ChatGPT/Gemini not yet |
+| Consumer | Claude | — |
+| Protocol | JSON-RPC | — |
+| Discovery | tools/list | — |
+| Same execute()? | ✅ | — |
 
 ## Test
 

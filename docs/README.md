@@ -1,14 +1,16 @@
 # Lite-Toon Documentation
 
-Complete documentation for the Lite-Toon SDK — a framework-agnostic TypeScript toolkit that connects AI agents (ChatGPT, Claude, Gemini) to your web application's business logic via OAuth, OpenAPI, MCP, and the TOON wire format.
+Complete documentation for the Lite-Toon SDK — a framework-agnostic TypeScript toolkit that connects AI agents to your web application's business logic via OAuth, MCP, and the TOON wire format.
+
+> **⚠️ Early development** — Lite-Toon is under active development. **Supported today:** Next.js App Router and **Claude** (MCP over Streamable HTTP at `/api/mcp`). **Not supported yet:** ChatGPT, Gemini, and additional framework adapters — coming soon.
 
 ## Quick links
 
 | I want to… | Start here |
 |---|---|
 | Run the demo in 5 minutes | [Getting Started](./getting-started.md) |
+| Connect Claude to my app | [Connect Agents](./integration/connect-agents.md) |
 | Understand the whole codebase | [Study Guide](./guide/study-guide.md) |
-| Wire ChatGPT / Claude / Gemini | [Connect Agents](./integration/connect-agents.md) |
 | Add a new tool to my app | [Capabilities](./concepts/capabilities.md) |
 | Integrate into a Next.js app | [Next.js Integration](./integration/nextjs.md) |
 | Look up an HTTP endpoint | [API Reference](./reference/api.md) |
@@ -32,14 +34,14 @@ Complete documentation for the Lite-Toon SDK — a framework-agnostic TypeScript
 | [Capabilities](./concepts/capabilities.md) | Defining, registering, and scoping agent tools |
 | [Capability Flows](./concepts/capability-flows.md) | Per-capability sequence diagrams (all transports) |
 | [OAuth & Authentication](./concepts/oauth.md) | PKCE flow, sessions, tokens, scopes |
-| [MCP Integration](./concepts/mcp.md) | Claude / Model Context Protocol over SSE + JSON-RPC |
+| [MCP Integration](./concepts/mcp.md) | Claude / Model Context Protocol (Streamable HTTP + legacy SSE) |
 | [Security](./security/overview.md) | Gatekeeper, rate limits, production checklist |
 
 ### Integration & reference
 
 | Document | Description |
 |---|---|
-| [Connect Agents](./integration/connect-agents.md) | Merchant setup for ChatGPT, Claude, Gemini |
+| [Connect Agents](./integration/connect-agents.md) | **Claude** setup only |
 | [Next.js Integration](./integration/nextjs.md) | Step-by-step wiring of all routes |
 | [API Reference](./reference/api.md) | Every endpoint, header, status code, example |
 | [Packages](./reference/packages.md) | `@lite-toon/*` package-by-package API surface |
@@ -70,7 +72,7 @@ docs/
 │   └── mcp.md                Claude protocol
 ├── integration/
 │   ├── nextjs.md             Next.js wiring
-│   └── connect-agents.md     ChatGPT / Claude / Gemini
+│   └── connect-agents.md     Claude (ChatGPT/Gemini not supported yet)
 ├── reference/
 │   ├── api.md                HTTP endpoints
 │   └── packages.md           SDK packages
@@ -128,7 +130,7 @@ lite-toon/
 1. [Getting Started](./getting-started.md)
 2. [Capabilities](./concepts/capabilities.md)
 3. [Next.js Integration](./integration/nextjs.md)
-4. [Connect Agents](./integration/connect-agents.md)
+4. [Connect Agents](./integration/connect-agents.md) — Claude
 5. [Security](./security/overview.md)
 
 ### For SDK contributors

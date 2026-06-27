@@ -2,11 +2,13 @@
 
 # Lite-Toon
 
-**Your web app, in every AI chat — ChatGPT, Claude, Gemini.**
+**Your web app, in every AI chat — starting with Claude.**
 
 Turn any web application into something your users can drive with natural language. No API keys for them. No JSON for them. They just talk to the AI they already use every day.
 
-Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connects AI agents to your business logic — with **OAuth per-user auth**, **auto-generated OpenAPI & MCP schemas**, and **TOON**, a wire format that shrinks payloads by up to **70%**.
+Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connects AI agents to your business logic — with **OAuth per-user auth**, **auto-generated schemas**, and **TOON**, a wire format that shrinks payloads by up to **70%**.
+
+> **⚠️ Early development** — Lite-Toon is under active development. **Supported today:** **Next.js App Router** and **Claude** (MCP over Streamable HTTP). **Not supported yet** (coming soon): ChatGPT, Gemini, and additional frameworks (Express, Hono, Edge).
 
 <br/>
 
@@ -17,7 +19,7 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 <br/>
 
-[Quick Start](#-quick-start) · [Documentation](docs/README.md) · [Connect Agents](#-connect-chatgpt-claude--gemini) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations)
+[Quick Start](#-quick-start) · [Documentation](docs/README.md) · [Connect Claude](#-connect-claude) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations)
 
 </div>
 
@@ -27,24 +29,26 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 > *"Add 2 pairs of Nike shoes to my cart."*
 
-That's it. That's what your customer types in ChatGPT. Lite-Toon handles the rest: OAuth login, scoped permissions, capability routing, per-user cart — and a response so compact your token bill notices.
+That's it. That's what your customer types in Claude. Lite-Toon handles the rest: OAuth login, scoped permissions, capability routing, per-user cart — and a response so compact your token bill notices.
 
 ```
-Customer → ChatGPT / Claude / Gemini
+Customer → Claude (MCP connector)
               ↓  OAuth (once)
-              ↓  POST /api/tools/addToCart
+              ↓  tools/call addToCart
 Lite-Toon   → validate user → execute capability → JSON or TOON
               ↓
 Customer ← "Done! I added 2x Nike Shoes to your cart."
 ```
 
-**One registry. Three agent platforms. Zero duplicate integration work.**
+**One registry. One supported agent today. More platforms soon.**
 
-| Agent | How it connects | What Lite-Toon generates |
-|---|---|---|
-| **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
-| **Claude** | MCP over SSE + JSON-RPC | MCP tool schemas |
-| **Gemini** | Extensions / Gems + OpenAPI | Gemini function declarations |
+| Status | Platform | How it connects | What Lite-Toon generates |
+|---|---|---|---|
+| ✅ **Supported** | **Claude** | MCP Streamable HTTP at `/api/mcp` + OAuth | MCP tool schemas + OAuth discovery |
+| ✅ **Supported** | **Next.js App Router** | Route factories in `@lite-toon/adapter-next` | Thin API route handlers |
+| 🔜 Not supported yet | **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
+| 🔜 Not supported yet | **Gemini** | Extensions / Gems + OpenAPI | Gemini function declarations |
+| 🔜 Coming soon | **Express / Hono / Edge** | Framework adapters | Same core, different transport |
 
 ---
 
@@ -55,9 +59,9 @@ Customer ← "Done! I added 2x Nike Shoes to your cart."
 | "We need an AI chatbot" | Your users already have one — plug into **theirs** |
 | JSON eats tokens on every call | **TOON** compresses tabular data 40–70% |
 | Who is this user? Whose cart? | **OAuth 2.0 + PKCE** with per-user `ExecutionContext` |
-| ChatGPT, Claude, Gemini = 3 integrations | **One `CapabilityRegistry`**, three auto-exports |
+| Multiple AI platforms = duplicate work | **One `CapabilityRegistry`**, many auto-exports (more agents coming) |
 | Security nightmares | `SecurityGatekeeper` — rate limits, scopes, token resolution |
-| Framework lock-in | Pure TS core; Next.js adapter ships today |
+| Framework lock-in | Pure TS core; **Next.js App Router** adapter ships today |
 
 ---
 
@@ -84,7 +88,7 @@ Users[3]{id, name, role}:
   u3, "Charlie", editor
 ```
 
-Use **TOON** on `/api/agent` for token-optimized direct integrations. Use **JSON** on `/api/tools/*` and MCP — because ChatGPT doesn't speak TOON (yet).
+Use **TOON** on `/api/agent` for token-optimized direct integrations. Use **JSON** on MCP and (when available) `/api/tools/*` — because consumer AI platforms expect JSON.
 
 ---
 
@@ -99,17 +103,18 @@ flowchart TB
     end
 
     subgraph agents ["AI Agents"]
-        GPT["ChatGPT"]
         Claude["Claude MCP"]
-        Gemini["Gemini"]
+        GPT["ChatGPT (soon)"]
+        Gemini["Gemini (soon)"]
     end
 
     subgraph network ["Demo API Layer"]
         OpenAPI["GET /api/openapi.json"]
         Tools["POST /api/tools/*"]
         OAuth["OAuth authorize + token"]
-        MCPsse["GET /api/mcp/sse"]
-        MCPmsg["POST /api/mcp/message"]
+        MCPhttp["GET+POST /api/mcp"]
+        MCPsse["GET /api/mcp/sse (legacy)"]
+        MCPmsg["POST /api/mcp/message (legacy)"]
         Agent["POST /api/agent"]
     end
 
@@ -126,14 +131,14 @@ flowchart TB
     end
 
     U --> agents
-    GPT --> OpenAPI
-    GPT --> Tools
-    Gemini --> OpenAPI
-    Gemini --> Tools
-    Claude --> MCPsse
-    Claude --> MCPmsg
-    agents --> OAuth
+    Claude --> MCPhttp
+    Claude --> OAuth
+    GPT -.-> OpenAPI
+    GPT -.-> Tools
+    Gemini -.-> OpenAPI
+    Gemini -.-> Tools
     Tools --> Adapter
+    MCPhttp --> Adapter
     MCPmsg --> Adapter
     Agent --> Adapter
     Adapter --> Auth
@@ -196,7 +201,7 @@ Open the demo:
 | URL | What |
 |---|---|
 | [localhost:3000](http://localhost:3000) | Interactive shop + TOON log panel |
-| [localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide for ChatGPT / Claude / Gemini |
+| [localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide — **Claude** connector only |
 | [localhost:3000/login](http://localhost:3000/login) | OAuth login for agent users |
 
 > Port already in use? `npm run kill-ports` frees 3000, 3001, and 3002.
@@ -237,27 +242,29 @@ Full documentation lives in [`docs/`](docs/README.md):
 | [Security](docs/security/overview.md) | Production hardening checklist |
 | [Packages](docs/reference/packages.md) | `@lite-toon/*` API surface |
 | [Demo App](docs/guide/demo-app.md) | Reference app walkthrough |
-| [Connect Agents](docs/integration/connect-agents.md) | ChatGPT, Claude, Gemini setup |
+| [Connect Agents](docs/integration/connect-agents.md) | Claude setup only |
 | [Capability Flows](docs/concepts/capability-flows.md) | Per-capability sequence diagrams |
 | [Cheat Sheets](docs/cheatsheets/README.md) | Printable one-page quick refs |
 
 ---
 
-## ✦ Connect ChatGPT, Claude & Gemini
+## ✦ Connect Claude
 
 Full walkthrough: [`docs/integration/connect-agents.md`](docs/integration/connect-agents.md)
 
-**For merchants (5-minute setup):**
+**Claude Chat (browser) — 5-minute setup:**
 
-1. Deploy the demo (or your app wired with Lite-Toon).
-2. Open `/connect` — copy the OpenAPI URL and OAuth endpoints.
-3. **ChatGPT:** Custom GPT → Import Actions from `/api/openapi.json` → OAuth with PKCE.
-4. **Claude:** MCP client → SSE at `/api/mcp/sse` → Bearer token from OAuth.
-5. **Gemini:** Import the same OpenAPI → same OAuth config.
-
-**For end users:** share a link to your Custom GPT or Gem. They talk, they shop. Done.
+1. Run the demo: `npm run dev:clean`
+2. Expose HTTPS: `ngrok http 3000`
+3. In Claude → **Settings → Connectors → Add custom connector**
+4. MCP server URL: `https://<your-ngrok-host>/api/mcp`
+5. Click **Connect** — Claude discovers OAuth via `/.well-known/oauth-protected-resource`
+6. Sign in at `/login` when redirected
+7. Ask: *"What products do you have?"* then *"Add 2 Nike shoes to my cart"*
 
 Demo OAuth client ID: `lite-toon-demo` · Scopes: `cart:read cart:write`
+
+> **ChatGPT and Gemini are not supported yet.** They will be added in a future release.
 
 ---
 
@@ -307,22 +314,28 @@ const agent = new UniversalAgent({
 import { createNextAgentHandler } from '@lite-toon/bridge/next';
 export const POST = createNextAgentHandler(agent);
 
-// app/api/tools/[name]/route.ts — ChatGPT & Gemini Actions
+// app/api/tools/[name]/route.ts — ChatGPT & Gemini (not supported yet)
 import { createNextToolsHandler } from '@lite-toon/bridge/next';
 const handler = createNextToolsHandler(agent);
 export const POST = (req, ctx) => handler(req, ctx);
 
-// app/api/mcp/message/route.ts  — Claude MCP
+// app/api/mcp/route.ts          — Claude MCP (Streamable HTTP, recommended)
+import { createMCPStreamableHttpHandler } from '@lite-toon/bridge/next';
+const handler = createMCPStreamableHttpHandler(agent);
+export const GET = handler;
+export const POST = handler;
+
+// app/api/mcp/message/route.ts  — Claude MCP (legacy JSON-RPC)
 import { createMCPMessageHandler } from '@lite-toon/bridge/next';
 export const POST = createMCPMessageHandler(agent);
 ```
 
-### 3. Auto-export schemas (one registry, three formats)
+### 3. Auto-export schemas (one registry, multiple formats)
 
 ```typescript
-agent.registry.exportMcpTools();                  // → Claude MCP
-agent.registry.exportOpenApiDocument({ ... });    // → ChatGPT & Gemini
-agent.registry.exportGeminiFunctionDeclarations(); // → Gemini API
+agent.registry.exportMcpTools();                  // → Claude MCP (supported)
+agent.registry.exportOpenApiDocument({ ... });    // → ChatGPT (not supported yet)
+agent.registry.exportGeminiFunctionDeclarations(); // → Gemini (not supported yet)
 ```
 
 ### 4. TOON in action
@@ -350,12 +363,16 @@ GetProductsResult[3]{id, name, price}:
 
 | Method | Path | Auth | Format | Consumer |
 |---|---|---|---|---|
-| `POST` | `/api/tools/{name}` | OAuth Bearer | JSON | ChatGPT, Gemini |
-| `GET` | `/api/openapi.json` | — | OpenAPI 3.1 | Action schema import |
+| `GET`+`POST` | `/api/mcp` | OAuth Bearer | JSON-RPC (Streamable HTTP) | **Claude** (primary) |
+| `POST` | `/api/mcp/message` | OAuth Bearer | JSON-RPC | Claude (legacy) |
+| `GET` | `/api/mcp/sse` | — | SSE | Claude (legacy) |
+| `POST` | `/api/tools/{name}` | OAuth Bearer | JSON | ❌ Not supported (ChatGPT/Gemini — coming soon) |
+| `GET` | `/api/openapi.json` | — | OpenAPI 3.1 | ❌ Not supported (ChatGPT/Gemini — coming soon) |
 | `GET` | `/api/oauth/authorize` | Session | redirect | OAuth flow |
 | `POST` | `/api/oauth/token` | — | JSON | OAuth PKCE exchange |
-| `POST` | `/api/mcp/message` | OAuth Bearer | JSON-RPC | Claude MCP |
-| `GET` | `/api/mcp/sse` | — | SSE | Claude MCP stream |
+| `POST` | `/api/oauth/register` | — | JSON | Dynamic client registration (MCP) |
+| `GET` | `/.well-known/oauth-protected-resource` | — | JSON | MCP OAuth discovery |
+| `GET` | `/.well-known/oauth-authorization-server` | — | JSON | OAuth server metadata |
 | `POST` | `/api/agent` | Optional | TOON / JSON | Direct integrations |
 | `POST` | `/api/demo` | Demo token | JSON + TOON log | Interactive UI |
 
@@ -405,7 +422,7 @@ GetProductsResult[3]{id, name, price}:
 
 | Path | Production guidance |
 |---|---|
-| `/api/tools/*`, `/api/mcp/message` | Always require OAuth Bearer + scopes (already enforced) |
+| `/api/mcp`, `/api/mcp/message`, `/api/tools/*` | Always require OAuth Bearer + scopes for protected capabilities |
 | `/api/oauth/*` | Replace in-memory store; validate redirect URIs for your domain |
 | `/api/agent` | Treat as internal unless you add `requireAuth` at the gatekeeper |
 | `/api/demo` | Disable or restrict to non-production environments |
@@ -423,20 +440,20 @@ GetProductsResult[3]{id, name, price}:
 ```mermaid
 sequenceDiagram
     participant User
-    participant AI as ChatGPT_Claude_Gemini
+    participant Claude as Claude_MCP
     participant OAuth as OAuthServer
     participant API as LiteToon_API
     participant Cap as Capabilities
 
-    User->>AI: "Add 2 Nike shoes to my cart"
-    AI->>OAuth: Authorization Code + PKCE
+    User->>Claude: "Add 2 Nike shoes to my cart"
+    Claude->>OAuth: Authorization Code + PKCE
     OAuth->>User: Login at /login
-    OAuth-->>AI: access_token
-    AI->>API: POST /api/tools/addToCart + Bearer
+    OAuth-->>Claude: access_token
+    Claude->>API: POST /api/mcp tools/call + Bearer
     API->>Cap: execute(params, userContext)
     Cap-->>API: user cart
-    API-->>AI: JSON result
-    AI-->>User: Natural language reply
+    API-->>Claude: MCP tool result
+    Claude-->>User: Natural language reply
 ```
 
 The built-in chat UI (`/api/demo`) simulates the AI decision layer locally and pipes requests through the same adapter — with a live TOON log so you can see the wire format in action.
@@ -447,15 +464,16 @@ The built-in chat UI (`/api/demo`) simulates the AI decision layer locally and p
 
 - [x] Framework-agnostic core (`@lite-toon/core`, `@lite-toon/toon`)
 - [x] Monorepo with `@lite-toon/*` workspaces + Turbo
-- [x] Next.js adapters (REST, MCP SSE, MCP message, tools, OpenAPI, OAuth)
-- [x] OAuth 2.0 user auth with per-user carts
-- [x] ChatGPT + Gemini via auto-generated OpenAPI
-- [x] Claude via full MCP JSON-RPC handler
+- [x] Next.js App Router adapters (agent, MCP Streamable HTTP, legacy SSE/message, OAuth)
+- [x] OAuth 2.0 user auth with per-user carts + MCP OAuth discovery
+- [x] Claude via MCP Streamable HTTP (`/api/mcp`) + legacy JSON-RPC
 - [x] Interactive demo + `/connect` merchant guide
+- [ ] ChatGPT Custom GPT / Actions (OpenAPI + `/api/tools/*`)
+- [ ] Gemini Extensions / OpenAPI integration
 - [ ] Publish `@lite-toon/bridge` to npm
 - [ ] Express / Hono / Edge adapters
 - [ ] Redis-backed auth store + rate limiter
-- [ ] Scenario B — real LLM in `/api/demo`
+- [ ] Real LLM in `/api/demo` (replace keyword parser)
 
 ---
 
@@ -475,7 +493,7 @@ Licensed under [MIT](LICENSE).
 
 **The age of AI agents is here. Your app should be in the conversation.**
 
-Lite-Toon — *less tokens, more action, every agent.*
+Lite-Toon — *less tokens, more action — Claude first, more agents soon.*
 
 <br/>
 

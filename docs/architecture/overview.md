@@ -4,13 +4,15 @@
 
 Deep dive into Lite-Toon's monorepo structure, dependency rules, runtime layers, and data flows.
 
+> **Current scope:** Next.js App Router adapter + Claude MCP. ChatGPT and Gemini are **not supported yet** — coming soon.
+
 ## Design principles
 
 1. **Framework-agnostic core** — `packages/core` and `packages/toon` have zero framework imports
 2. **Adapters are thin** — transport logic lives in `packages/adapter-next`; demo routes are 3–10 lines
-3. **One registry, many exports** — register capabilities once; auto-generate OpenAPI, MCP, Gemini schemas
+3. **One registry, many exports** — register capabilities once; MCP export is supported today; OpenAPI/Gemini exports are for future platforms (not supported yet)
 4. **Inward dependencies only** — adapters → auth/core/toon; core never imports adapters
-5. **TOON by default** — `/api/agent` uses TOON unless JSON is requested; agent platforms use JSON
+5. **TOON by default** — `/api/agent` uses TOON unless JSON is requested; MCP uses JSON-RPC
 
 ## High-level diagram
 
@@ -21,17 +23,18 @@ flowchart TB
     end
 
     subgraph agents ["AI Agents"]
-        GPT["ChatGPT"]
         Claude["Claude MCP"]
-        Gemini["Gemini"]
+        GPT["ChatGPT (soon)"]
+        Gemini["Gemini (soon)"]
     end
 
     subgraph network ["HTTP API Layer"]
         OpenAPI["GET /api/openapi.json"]
         Tools["POST /api/tools/*"]
         OAuth["OAuth authorize + token"]
-        MCPsse["GET /api/mcp/sse"]
-        MCPmsg["POST /api/mcp/message"]
+        MCPhttp["GET+POST /api/mcp"]
+        MCPsse["GET /api/mcp/sse (legacy)"]
+        MCPmsg["POST /api/mcp/message (legacy)"]
         Agent["POST /api/agent"]
         Demo["POST /api/demo"]
     end
@@ -49,14 +52,14 @@ flowchart TB
     end
 
     U --> agents
-    GPT --> OpenAPI
-    GPT --> Tools
-    Gemini --> OpenAPI
-    Gemini --> Tools
-    Claude --> MCPsse
-    Claude --> MCPmsg
-    agents --> OAuth
+    Claude --> MCPhttp
+    Claude --> OAuth
+    GPT -.-> OpenAPI
+    GPT -.-> Tools
+    Gemini -.-> OpenAPI
+    Gemini -.-> Tools
     Tools --> Adapter
+    MCPhttp --> Adapter
     MCPmsg --> Adapter
     Agent --> Adapter
     Demo --> Adapter

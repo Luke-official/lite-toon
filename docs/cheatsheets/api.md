@@ -4,18 +4,22 @@ Base: `http://localhost:3000`
 
 ## All endpoints
 
-| Method | Path | Auth | Format |
-|---|---|---|---|
-| POST | `/api/agent` | Optional | TOON/JSON |
-| POST | `/api/tools/{name}` | Bearer + scopes | JSON |
-| GET | `/api/openapi.json` | — | OpenAPI 3.1 |
-| POST | `/api/oauth/login` | — | JSON |
-| GET | `/api/oauth/authorize` | Cookie | redirect |
-| POST | `/api/oauth/token` | — | JSON |
-| GET | `/api/mcp/sse` | — | SSE |
-| POST | `/api/mcp/message` | Bearer* | JSON-RPC |
-| GET | `/api/demo` | — | JSON |
-| POST | `/api/demo` | auto | JSON+TOON |
+| Method | Path | Auth | Format | Status |
+|---|---|---|---|---|
+| GET+POST | `/api/mcp` | Bearer* | JSON-RPC | ✅ Claude |
+| POST | `/api/agent` | Optional | TOON/JSON | ✅ |
+| POST | `/api/tools/{name}` | Bearer + scopes | JSON | ❌ Not supported yet |
+| GET | `/api/openapi.json` | — | OpenAPI 3.1 | ❌ Not supported yet |
+| POST | `/api/oauth/login` | — | JSON | ✅ |
+| GET | `/api/oauth/authorize` | Cookie | redirect | ✅ |
+| POST | `/api/oauth/token` | — | JSON | ✅ |
+| POST | `/api/oauth/register` | — | JSON | ✅ |
+| GET | `/.well-known/oauth-protected-resource` | — | JSON | ✅ |
+| GET | `/.well-known/oauth-authorization-server` | — | JSON | ✅ |
+| GET | `/api/mcp/sse` | — | SSE | legacy |
+| POST | `/api/mcp/message` | Bearer* | JSON-RPC | legacy |
+| GET | `/api/demo` | — | JSON | demo |
+| POST | `/api/demo` | auto | JSON+TOON | demo |
 
 *Bearer required for `tools/call` only
 

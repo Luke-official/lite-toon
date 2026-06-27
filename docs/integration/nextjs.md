@@ -2,7 +2,9 @@
 
 > **Cheat sheet:** [nextjs.md](../cheatsheets/nextjs.md)
 
-Step-by-step guide to wire Lite-Toon into a Next.js App Router application.
+Step-by-step guide to wire Lite-Toon into a **Next.js App Router** application — the only officially supported framework adapter today.
+
+> Other framework adapters (Express, Hono, Edge) are on the roadmap.
 
 ## Prerequisites
 
@@ -107,9 +109,9 @@ import { agent } from '@/agent';
 export const POST = createNextAgentHandler(agent);
 ```
 
-### Tools endpoint (ChatGPT / Gemini)
+### Tools endpoint — not supported yet (ChatGPT / Gemini)
 
-`src/app/api/tools/[name]/route.ts`:
+`src/app/api/tools/[name]/route.ts` — exists in the demo for future use; **do not use for ChatGPT or Gemini today**:
 
 ```typescript
 import { createNextToolsHandler } from '@lite-toon/bridge/next';
@@ -180,9 +182,20 @@ import { oauthServer } from '@/lib/auth';
 export const POST = createOAuthLoginHandler({ oauth: oauthServer });
 ```
 
-### MCP routes (Claude)
+### MCP routes (Claude — supported)
 
-`src/app/api/mcp/sse/route.ts`:
+`src/app/api/mcp/route.ts` — Streamable HTTP (recommended for Claude Chat):
+
+```typescript
+import { createMCPStreamableHttpHandler } from '@lite-toon/bridge/next';
+import { agent } from '@/agent';
+
+const handler = createMCPStreamableHttpHandler(agent);
+export const GET = handler;
+export const POST = handler;
+```
+
+`src/app/api/mcp/sse/route.ts` — legacy SSE:
 
 ```typescript
 import { createMCPSseHandler } from '@lite-toon/bridge/next';
@@ -191,13 +204,40 @@ import { agent } from '@/agent';
 export const GET = createMCPSseHandler(agent);
 ```
 
-`src/app/api/mcp/message/route.ts`:
+`src/app/api/mcp/message/route.ts` — legacy JSON-RPC:
 
 ```typescript
 import { createMCPMessageHandler } from '@lite-toon/bridge/next';
 import { agent } from '@/agent';
 
 export const POST = createMCPMessageHandler(agent);
+```
+
+### MCP OAuth discovery
+
+`src/app/.well-known/oauth-protected-resource/route.ts`:
+
+```typescript
+import { createOAuthProtectedResourceHandler } from '@lite-toon/bridge/next';
+
+export const GET = createOAuthProtectedResourceHandler();
+```
+
+`src/app/.well-known/oauth-authorization-server/route.ts`:
+
+```typescript
+import { createOAuthAuthorizationServerMetadataHandler } from '@lite-toon/bridge/next';
+
+export const GET = createOAuthAuthorizationServerMetadataHandler();
+```
+
+`src/app/api/oauth/register/route.ts`:
+
+```typescript
+import { createOAuthRegisterHandler } from '@lite-toon/bridge/next';
+import { oauthServer } from '@/lib/auth';
+
+export const POST = createOAuthRegisterHandler({ oauth: oauthServer });
 ```
 
 ## Step 6: Login page
@@ -229,7 +269,10 @@ curl -X POST http://localhost:3000/api/agent \
   -d 'request[1]{action, params}:
   "getProducts", "{}"'
 
-# OAuth + tools (use test script or manual flow)
+# MCP Streamable HTTP (supported)
+npm run test:mcp -w @lite-toon/demo
+
+# OpenAPI + tools (internal dev only — ChatGPT/Gemini not supported yet)
 npm run test:oauth -w @lite-toon/demo
 ```
 
@@ -238,11 +281,15 @@ npm run test:oauth -w @lite-toon/demo
 | File | Handler | Method |
 |---|---|---|
 | `api/agent/route.ts` | `createNextAgentHandler` | POST |
+| `api/mcp/route.ts` | `createMCPStreamableHttpHandler` | GET, POST |
 | `api/tools/[name]/route.ts` | `createNextToolsHandler` | POST |
 | `api/openapi.json/route.ts` | `createOpenApiSpecHandler` | GET |
 | `api/oauth/authorize/route.ts` | `createOAuthAuthorizeHandler` | GET |
 | `api/oauth/token/route.ts` | `createOAuthTokenHandler` | POST |
 | `api/oauth/login/route.ts` | `createOAuthLoginHandler` | POST |
+| `api/oauth/register/route.ts` | `createOAuthRegisterHandler` | POST |
+| `.well-known/oauth-protected-resource/route.ts` | `createOAuthProtectedResourceHandler` | GET |
+| `.well-known/oauth-authorization-server/route.ts` | `createOAuthAuthorizationServerMetadataHandler` | GET |
 | `api/mcp/sse/route.ts` | `createMCPSseHandler` | GET |
 | `api/mcp/message/route.ts` | `createMCPMessageHandler` | POST |
 
@@ -265,14 +312,9 @@ OpenAPI and MCP SSE build URLs from request headers:
 OAUTH_CLIENT_ID=my-production-app
 ```
 
-### ChatGPT setup
+### ChatGPT / Gemini — not supported yet
 
-1. Deploy your app with HTTPS
-2. Import `https://your-domain/api/openapi.json` in Custom GPT Actions
-3. Configure OAuth with your authorize/token URLs
-4. Enable PKCE
-
-See [Connect Agents](./connect-agents.md) for platform-specific instructions.
+OpenAPI and tools routes may be wired in the demo for internal development. **Do not connect ChatGPT or Gemini** until support is announced.
 
 ## Adding capabilities later
 
@@ -288,7 +330,8 @@ See [Connect Agents](./connect-agents.md) for platform-specific instructions.
 | Multiple `UniversalAgent` instances | Use one singleton |
 | Importing `@lite-toon/core` directly | Use `@lite-toon/bridge` |
 | Forgetting login page | OAuth authorize needs session cookie |
-| Using TOON for ChatGPT | ChatGPT Actions need JSON on `/api/tools/*` |
+| Using TOON for ChatGPT | ChatGPT Actions need JSON on `/api/tools/*` (when supported) |
+| Missing `/api/mcp` route | Claude Chat expects Streamable HTTP, not only legacy SSE |
 
 ## Related
 

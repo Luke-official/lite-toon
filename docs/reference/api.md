@@ -117,9 +117,11 @@ request[1]{action, params}:
 
 ---
 
-## Tools endpoints (ChatGPT / Gemini)
+## Tools endpoints — not supported (ChatGPT / Gemini coming soon)
 
-### `POST /api/tools/{name}`
+> **ChatGPT and Gemini are not supported today.** The routes below exist in the demo codebase for future use only. Do not build integrations against them until support is announced.
+
+### `POST /api/tools/{name}` *(internal — not for production use)*
 
 Execute a single capability by name. **Auth required.** JSON only.
 
@@ -189,9 +191,9 @@ Content-Type: application/json
 {}
 ```
 
-### `GET /api/openapi.json`
+### `GET /api/openapi.json` *(internal — not for production use)*
 
-Auto-generated OpenAPI 3.1 document for ChatGPT Actions and Gemini Extensions.
+Auto-generated OpenAPI 3.1 document. Reserved for future ChatGPT Actions and Gemini Extensions — **not supported yet**.
 
 **Auth:** None
 
@@ -293,7 +295,41 @@ Also accepts `application/x-www-form-urlencoded`.
 
 ## MCP endpoints
 
-### `GET /api/mcp/sse`
+### `GET` + `POST /api/mcp` (Streamable HTTP — primary)
+
+JSON-RPC 2.0 handler for Claude Chat and modern MCP clients. Supports the same methods as `/api/mcp/message`.
+
+**Auth:** Required for scoped `tools/call` (e.g. `addToCart`); `getProducts` works without a token in the demo.
+
+#### Example: initialize
+
+```http
+POST /api/mcp
+Content-Type: application/json
+
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": { "name": "test", "version": "1.0.0" }
+  }
+}
+```
+
+### OAuth discovery (MCP)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/.well-known/oauth-protected-resource` | Protected resource metadata (PRM) |
+| `GET` | `/.well-known/oauth-authorization-server` | Authorization server metadata (ASM) |
+| `POST` | `/api/oauth/register` | Dynamic client registration (DCR) |
+
+Unauthenticated `tools/call` for protected capabilities returns **HTTP 401** with a `WWW-Authenticate` header pointing at the PRM URL.
+
+### `GET /api/mcp/sse` (legacy)
 
 Opens an SSE stream. Sends `endpoint` event with the message URL.
 
@@ -301,7 +337,7 @@ Opens an SSE stream. Sends `endpoint` event with the message URL.
 
 See [MCP Integration](../concepts/mcp.md) for full protocol details.
 
-### `POST /api/mcp/message`
+### `POST /api/mcp/message` (legacy)
 
 JSON-RPC 2.0 handler for MCP.
 

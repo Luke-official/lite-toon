@@ -1,5 +1,7 @@
 # Getting Started — Cheat Sheet
 
+> **Supported:** Next.js App Router · Claude MCP · TOON. ChatGPT/Gemini **not supported yet**.
+
 ## Prerequisites
 
 Node 18+ · npm 10+ · ports 3000–3002 free
@@ -19,16 +21,15 @@ npm run dev:clean
 | URL | Purpose |
 |---|---|
 | `http://localhost:3000` | Chat UI + TOON log |
-| `http://localhost:3000/connect` | Merchant setup |
+| `http://localhost:3000/connect` | Merchant setup (Claude) |
 | `http://localhost:3000/login` | OAuth login |
-| `http://localhost:3000/api/openapi.json` | OpenAPI spec |
 
 ## Test commands
 
 ```bash
 npm run test:api -w @lite-toon/demo      # TOON /api/agent
-npm run test:oauth -w @lite-toon/demo    # OAuth + tools
-npm run test:mcp -w @lite-toon/demo       # MCP JSON-RPC
+npm run test:mcp -w @lite-toon/demo      # MCP Streamable HTTP (Claude)
+# test:oauth exists for internal dev only — ChatGPT/Gemini not supported yet
 ```
 
 ## First curl (TOON)

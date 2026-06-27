@@ -2,7 +2,7 @@
 
 > **Cheat sheet:** [capability-flows.md](../cheatsheets/capability-flows.md)
 
-Per-capability sequence diagrams for every demo tool across all transports: **ChatGPT/Gemini** (`/api/tools`), **Claude MCP**, **TOON agent** (`/api/agent`), and the **demo UI** (`/api/demo`).
+Per-capability sequence diagrams for every demo tool across transports. **Supported today:** Claude MCP, TOON agent (`/api/agent`), demo UI (`/api/demo`). ChatGPT/Gemini (`/api/tools`) diagrams are included for reference — those platforms are **not supported yet**.
 
 See also: [Capabilities guide](./capabilities.md) · [Capabilities cheat sheet](../cheatsheets/capabilities.md)
 

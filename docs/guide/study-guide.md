@@ -9,7 +9,7 @@ A structured path to understand every aspect of the Lite-Toon codebase — from 
 Lite-Toon is a **Universal Agent API Layer**: middleware that lets AI agents call your web app's business logic securely. The SDK handles:
 
 - **Capability registration** — named tools with JSON Schema and OAuth scopes
-- **Schema export** — one registry → OpenAPI (ChatGPT/Gemini), MCP (Claude), TOON (direct)
+- **Schema export** — one registry → MCP (Claude, supported), OpenAPI/Gemini (not supported yet), TOON (direct)
 - **Authentication** — OAuth 2.0 + PKCE with per-user `ExecutionContext`
 - **Wire format** — TOON for token-efficient agent round-trips
 
@@ -223,7 +223,7 @@ In `capabilities.ts`, `cartsByUser` is a `Map<string, CartItem[]>`. The `userId`
 | Endpoint | Auth | Format | Consumer |
 |---|---|---|---|
 | `POST /api/agent` | Optional Bearer | TOON or JSON | Direct integrations |
-| `POST /api/tools/{name}` | Required Bearer + scopes | JSON | ChatGPT, Gemini |
+| `POST /api/tools/{name}` | Required Bearer + scopes | JSON | Not supported yet (ChatGPT/Gemini) |
 | `POST /api/mcp/message` | Required Bearer + scopes | JSON-RPC | Claude |
 | `GET /api/mcp/sse` | None | SSE | Claude (discovery) |
 | `GET /api/openapi.json` | None | OpenAPI 3.1 | GPT Actions import |

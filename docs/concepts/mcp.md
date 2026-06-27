@@ -2,38 +2,60 @@
 
 > **Cheat sheet:** [mcp.md](../cheatsheets/mcp.md)
 
-Lite-Toon exposes a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server so Claude and other MCP clients can discover and call your capabilities as tools.
+Lite-Toon exposes a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server so **Claude** and other MCP clients can discover and call your capabilities as tools.
 
 ## Transport
 
-MCP over HTTP uses two endpoints:
+MCP is available over two transports:
+
+### Streamable HTTP (recommended — Claude Chat)
+
+| Method | Path | Role |
+|---|---|---|
+| `GET` | `/api/mcp` | Optional SSE stream for server-initiated messages |
+| `POST` | `/api/mcp` | JSON-RPC 2.0 handler (primary) |
+
+Wire in Next.js:
+
+```typescript
+import { createMCPStreamableHttpHandler } from '@lite-toon/bridge/next';
+
+const handler = createMCPStreamableHttpHandler(agent);
+export const GET = handler;
+export const POST = handler;
+```
+
+### Legacy SSE + message (still supported)
 
 | Method | Path | Role |
 |---|---|---|
 | `GET` | `/api/mcp/sse` | SSE stream — sends `endpoint` event with message URL |
 | `POST` | `/api/mcp/message` | JSON-RPC 2.0 message handler |
 
-Authentication: Bearer access token (same OAuth flow as `/api/tools/*`).
+Authentication: Bearer access token (same OAuth flow as `/api/tools/*`). Claude Chat discovers OAuth automatically via:
 
-## Connection flow
+- `GET /.well-known/oauth-protected-resource`
+- `GET /.well-known/oauth-authorization-server`
+- `POST /api/oauth/register` (dynamic client registration)
+
+## Connection flow (Streamable HTTP)
 
 ```mermaid
 sequenceDiagram
-    participant Client as MCP Client
-    participant SSE as /api/mcp/sse
-    participant Msg as /api/mcp/message
+    participant Client as Claude
+    participant MCP as /api/mcp
+    participant OAuth as OAuth discovery
 
-    Client->>SSE: GET (open SSE stream)
-    SSE-->>Client: event: endpoint → /api/mcp/message
-    Client->>Msg: POST initialize
-    Msg-->>Client: server capabilities
-    Client->>Msg: POST tools/list
-    Msg-->>Client: tool schemas
-    Client->>Msg: POST tools/call
-    Msg-->>Client: tool result
+    Client->>OAuth: Read PRM + ASM (on connect)
+    Client->>MCP: POST initialize
+    MCP-->>Client: server capabilities
+    Client->>MCP: POST tools/list
+    MCP-->>Client: tool schemas
+    Client->>MCP: POST tools/call + Bearer
+    MCP-->>Client: tool result
 ```
 
-### 1. Open SSE stream
+## Connection flow (legacy SSE)
 
 ```http
 GET /api/mcp/sse
@@ -227,15 +249,30 @@ File: `packages/adapter-next/src/sse.ts`
 ## Wiring in Next.js
 
 ```typescript
-// app/api/mcp/sse/route.ts
+// app/api/mcp/route.ts — Streamable HTTP (recommended)
+import { createMCPStreamableHttpHandler } from '@lite-toon/bridge/next';
+import { agent } from '@/agent';
+const handler = createMCPStreamableHttpHandler(agent);
+export const GET = handler;
+export const POST = handler;
+
+// app/api/mcp/sse/route.ts — legacy
 import { createMCPSseHandler } from '@lite-toon/bridge/next';
 import { agent } from '@/agent';
 export const GET = createMCPSseHandler(agent);
 
-// app/api/mcp/message/route.ts
+// app/api/mcp/message/route.ts — legacy
 import { createMCPMessageHandler } from '@lite-toon/bridge/next';
 import { agent } from '@/agent';
 export const POST = createMCPMessageHandler(agent);
+
+// app/.well-known/oauth-protected-resource/route.ts
+import { createOAuthProtectedResourceHandler } from '@lite-toon/bridge/next';
+export const GET = createOAuthProtectedResourceHandler();
+
+// app/.well-known/oauth-authorization-server/route.ts
+import { createOAuthAuthorizationServerMetadataHandler } from '@lite-toon/bridge/next';
+export const GET = createOAuthAuthorizationServerMetadataHandler();
 ```
 
 ## Testing
@@ -244,24 +281,25 @@ export const POST = createMCPMessageHandler(agent);
 npm run test:mcp -w @lite-toon/demo
 ```
 
-Runs: OAuth login → token → `initialize` → `tools/list` → `tools/call addToCart`.
+Runs: OAuth discovery → Streamable HTTP `initialize` → `tools/list` → `tools/call` → legacy message endpoint smoke test.
 
-## Claude Desktop configuration (example)
+## Claude Chat configuration
 
-Point your MCP client at:
+Point your Claude custom connector at:
 
-- **SSE URL:** `https://your-domain/api/mcp/sse`
-- **Auth:** OAuth Bearer token from the Lite-Toon OAuth flow
+- **MCP URL:** `https://your-domain/api/mcp`
+- **Auth:** OAuth (automatic via well-known metadata)
 
-For local development with Claude, you typically need a public HTTPS tunnel (ngrok, Cloudflare Tunnel) since Claude cannot reach `localhost` directly.
+For local development with Claude, you need a public HTTPS tunnel (ngrok, Cloudflare Tunnel) since Claude cannot reach `localhost` directly.
 
 ## Comparison: MCP vs OpenAPI tools
 
-| Aspect | MCP (`/api/mcp/*`) | OpenAPI (`/api/tools/*`) |
+| Aspect | MCP (`/api/mcp`) | OpenAPI (`/api/tools/*`) |
 |---|---|---|
+| Status | **Supported** (Claude) | **Not supported yet** (ChatGPT/Gemini) |
 | Protocol | JSON-RPC 2.0 | REST POST per tool |
 | Discovery | `tools/list` | `GET /api/openapi.json` |
-| Transport | SSE + HTTP POST | HTTP POST |
+| Transport | Streamable HTTP (+ legacy SSE) | HTTP POST |
 | Primary consumer | Claude | ChatGPT, Gemini |
 | Response format | MCP content blocks | `{ success, data }` JSON |
 | Auth | Bearer + scopes | Bearer + scopes |

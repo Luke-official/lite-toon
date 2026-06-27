@@ -4,6 +4,8 @@
 
 This guide gets the Lite-Toon demo running locally and verifies each transport layer works.
 
+> **Project status:** Lite-Toon is in early development. Fully tested and supported today: **Next.js App Router**, **Claude MCP** (`/api/mcp`), and direct **TOON** access (`/api/agent`). **ChatGPT and Gemini are not supported yet** — coming soon.
+
 ## Prerequisites
 
 | Requirement | Version |
@@ -44,7 +46,7 @@ All variables are optional for local development.
 | URL | What you'll see |
 |---|---|
 | [http://localhost:3000](http://localhost:3000) | Interactive shop + chat + TOON System Log |
-| [http://localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide (OpenAPI + OAuth URLs) |
+| [http://localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide — **Claude** only |
 | [http://localhost:3000/login](http://localhost:3000/login) | OAuth username login for agent users |
 
 ### Try the chat UI
@@ -70,14 +72,11 @@ With the dev server running, open a second terminal:
 # TOON via POST /api/agent
 npm run test:api -w @lite-toon/demo
 
-# Full OAuth PKCE + POST /api/tools/*
-npm run test:oauth -w @lite-toon/demo
-
-# MCP initialize + tools/list + tools/call
+# MCP Streamable HTTP + OAuth discovery (Claude)
 npm run test:mcp -w @lite-toon/demo
 ```
 
-All three should complete without errors.
+`test:mcp` and `test:api` are the primary smoke tests. `test:oauth` covers internal OpenAPI/tools routes that will power ChatGPT/Gemini when those platforms are supported — **do not use them for ChatGPT or Gemini integration today.**
 
 ## Your first TOON request (curl)
 
@@ -143,7 +142,7 @@ cd lite-toon ; npm install
 | Goal | Document |
 |---|---|
 | Understand every layer of the codebase | [Study Guide](./guide/study-guide.md) |
-| Connect ChatGPT / Claude / Gemini | [Connect Agents](./integration/connect-agents.md) |
+| Connect Claude to your deployment | [Connect Agents](./integration/connect-agents.md) |
 | Add your own business logic | [Capabilities](./concepts/capabilities.md) |
 | Wire Lite-Toon into your Next.js app | [Next.js Integration](./integration/nextjs.md) |
 | Look up endpoints and headers | [API Reference](./reference/api.md) |

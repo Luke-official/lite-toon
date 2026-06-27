@@ -44,21 +44,29 @@ const agent = new UniversalAgent({
 | Factory | Endpoint |
 |---|---|
 | `createNextAgentHandler` | `POST /api/agent` |
-| `createNextToolsHandler` | `POST /api/tools/{name}` |
+| `createMCPStreamableHttpHandler` | `GET`+`POST /api/mcp` |
 | `createMCPMessageHandler` | `POST /api/mcp/message` |
 | `createMCPSseHandler` | `GET /api/mcp/sse` |
+| `createNextToolsHandler` | `POST /api/tools/{name}` *(not supported yet)* |
 | `createOAuthAuthorizeHandler` | `GET /api/oauth/authorize` |
 | `createOAuthTokenHandler` | `POST /api/oauth/token` |
 | `createOAuthLoginHandler` | `POST /api/oauth/login` |
-| `createOpenApiSpecHandler` | `GET /api/openapi.json` |
+| `createOAuthRegisterHandler` | `POST /api/oauth/register` |
+| `createOAuthProtectedResourceHandler` | `GET /.well-known/oauth-protected-resource` |
+| `createOAuthAuthorizationServerMetadataHandler` | `GET /.well-known/oauth-authorization-server` |
+| `createOpenApiSpecHandler` | `GET /api/openapi.json` *(not supported yet)* |
 
 ## Schema export (one registry)
 
 ```
-registry.exportMcpTools()                  → Claude
-registry.exportOpenApiDocument(opts)       → ChatGPT, Gemini
-registry.exportGeminiFunctionDeclarations()  → Gemini API
+registry.exportMcpTools()                    → Claude ✅
+registry.exportOpenApiDocument(opts)         → ChatGPT — not supported yet
+registry.exportGeminiFunctionDeclarations()  → Gemini — not supported yet
 ```
+
+## Supported today
+
+Next.js App Router · Claude MCP (`/api/mcp`) · TOON (`/api/agent`)
 
 ## Request flow (tools)
 

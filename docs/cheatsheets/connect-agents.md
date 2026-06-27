@@ -1,14 +1,19 @@
 # Connect Agents — Cheat Sheet
 
-## Shared URLs
+> **Supported:** Claude (MCP Streamable HTTP)  
+> **Not supported yet:** ChatGPT, Gemini — coming soon
+
+## Shared URLs (Claude)
 
 ```
-OpenAPI:   GET  /api/openapi.json
-Authorize: GET  /api/oauth/authorize
-Token:     POST /api/oauth/token
-Tools:     POST /api/tools/{name}
-MCP SSE:   GET  /api/mcp/sse
-MCP RPC:   POST /api/mcp/message
+MCP (primary): GET+POST /api/mcp
+MCP legacy:    GET  /api/mcp/sse
+               POST /api/mcp/message
+PRM:           GET  /.well-known/oauth-protected-resource
+ASM:           GET  /.well-known/oauth-authorization-server
+Authorize:     GET  /api/oauth/authorize
+Token:         POST /api/oauth/token
+Register:      POST /api/oauth/register
 ```
 
 ## Demo credentials
@@ -17,52 +22,41 @@ Client ID: `lite-toon-demo` · Scopes: `cart:read cart:write`
 
 ## Platform picker
 
-| Platform | Connect via |
-|---|---|
-| ChatGPT | Import OpenAPI + OAuth PKCE |
-| Gemini | Same OpenAPI + OAuth |
-| Claude | MCP SSE + OAuth Bearer |
-| Direct | POST /api/agent (TOON) |
+| Platform | Status | Connect via |
+|---|---|---|
+| **Claude** | ✅ Supported | `/api/mcp` + OAuth discovery |
+| ChatGPT | ❌ Not supported yet | — |
+| Gemini | ❌ Not supported yet | — |
+| Direct | ✅ Supported | POST /api/agent (TOON) |
 
-## ChatGPT setup (5 steps)
-
-```
-1. GPT Builder → Actions → Import OpenAPI URL
-2. Auth: OAuth, Client ID lite-toon-demo, no secret
-3. Auth URL + Token URL from your domain
-4. Scope: cart:read cart:write, PKCE on
-5. Test OAuth → Publish
-```
-
-## Claude setup
+## Claude setup (Claude Chat + ngrok)
 
 ```
-1. MCP client → SSE URL
-2. Read endpoint event
-3. OAuth for Bearer token
-4. JSON-RPC to message URL
+1. npm run dev:clean
+2. ngrok http 3000
+3. Claude → Settings → Connectors → Add custom connector
+4. MCP URL: https://<ngrok-host>/api/mcp
+5. Connect → OAuth → sign in at /login
+6. Ask: "What products?" → "Add 2 Nike shoes"
 ```
 
-## Gemini setup
+## ChatGPT / Gemini
 
-```
-Same as ChatGPT — import /api/openapi.json + OAuth
-```
+**Not supported yet.** Do not attempt integration.
 
-## Local + ChatGPT
+## Local dev
 
 ```bash
 npm run dev:clean
 ngrok http 3000
-# Use ngrok HTTPS URL in GPT config
-# Add ngrok callback to allowedRedirectUris
+# Claude needs HTTPS — cannot use localhost directly
 ```
 
 ## Test without agents
 
 ```bash
-npm run test:oauth -w @lite-toon/demo
-npm run test:mcp -w @lite-toon/demo
+npm run test:mcp -w @lite-toon/demo    # supported
+npm run test:api -w @lite-toon/demo    # supported
 # Or use localhost:3000 chat UI
 ```
 
@@ -72,14 +66,14 @@ npm run test:mcp -w @lite-toon/demo
 
 ## Response formats
 
-ChatGPT/Gemini: JSON · Claude: MCP text blocks · Direct: TOON
+Claude: MCP text blocks · Direct: TOON
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---|---|
 | OAuth fail | Check redirect URI allowlist |
-| 401 tools | Re-auth in GPT settings |
-| 403 | Missing scope — re-auth |
-| localhost + GPT | Use ngrok |
-| MCP 401 | Bearer on tools/call only |
+| Claude + localhost | Use ngrok HTTPS |
+| MCP 401 on addToCart | Complete OAuth connector flow |
+| MCP 401 on getProducts | Should work without token in demo |
+| Cart not in browser | Sign in at /login with same OAuth username |
