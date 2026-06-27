@@ -3,6 +3,7 @@ import {
   AuthStore,
   AuthUser,
   AuthorizationCodeRecord,
+  RegisteredClientRecord,
   SessionRecord,
 } from './types';
 
@@ -19,6 +20,7 @@ export class InMemoryAuthStore implements AuthStore {
   private codes = new Map<string, AuthorizationCodeRecord>();
   private tokens = new Map<string, AccessTokenRecord>();
   private sessions = new Map<string, SessionRecord>();
+  private clients = new Map<string, RegisteredClientRecord>();
 
   async upsertUser(username: string): Promise<AuthUser> {
     const normalized = username.trim().toLowerCase();
@@ -80,5 +82,13 @@ export class InMemoryAuthStore implements AuthStore {
 
   async deleteSession(sessionId: string): Promise<void> {
     this.sessions.delete(sessionId);
+  }
+
+  async saveRegisteredClient(record: RegisteredClientRecord): Promise<void> {
+    this.clients.set(record.clientId, record);
+  }
+
+  async getRegisteredClient(clientId: string): Promise<RegisteredClientRecord | null> {
+    return this.clients.get(clientId) ?? null;
   }
 }

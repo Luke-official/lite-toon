@@ -10,7 +10,7 @@ const DEFAULT_SCOPES: Record<string, string> = {
  * Builds scopes required by a capability for OpenAPI security requirements.
  */
 function capabilityScopes(capability: Capability): string[] {
-  if (capability.scopes && capability.scopes.length > 0) {
+  if (capability.scopes) {
     return capability.scopes;
   }
   return ['cart:read'];
@@ -31,58 +31,61 @@ export function buildOpenApiDocument(
     const pathKey = `${prefix}/${capability.name}`;
     const requiredScopes = capabilityScopes(capability);
 
-    paths[pathKey] = {
-      post: {
-        operationId: capability.name,
-        summary: capability.description,
-        description: capability.description,
-        security: [{ oauth2: requiredScopes }],
-        requestBody: {
-          required: true,
-          content: {
-            'application/json': {
-              schema: capability.schema ?? {
-                type: 'object',
-                properties: {},
-              },
+    const operation: Record<string, unknown> = {
+      operationId: capability.name,
+      summary: capability.description,
+      description: capability.description,
+      requestBody: {
+        required: true,
+        content: {
+          'application/json': {
+            schema: capability.schema ?? {
+              type: 'object',
+              properties: {},
             },
-          },
-        },
-        responses: {
-          '200': {
-            description: 'Successful capability execution',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    success: { type: 'boolean' },
-                    data: { type: 'object' },
-                  },
-                },
-              },
-            },
-          },
-          '400': {
-            description: 'Execution error',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    success: { type: 'boolean' },
-                    message: { type: 'string' },
-                  },
-                },
-              },
-            },
-          },
-          '401': {
-            description: 'Unauthorized',
           },
         },
       },
+      responses: {
+        '200': {
+          description: 'Successful capability execution',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  data: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+        '400': {
+          description: 'Execution error',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: { type: 'boolean' },
+                  message: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        '401': {
+          description: 'Unauthorized',
+        },
+      },
     };
+
+    if (requiredScopes.length > 0) {
+      operation.security = [{ oauth2: requiredScopes }];
+    }
+
+    paths[pathKey] = { post: operation };
   }
 
   return {

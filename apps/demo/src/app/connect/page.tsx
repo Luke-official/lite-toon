@@ -12,8 +12,11 @@ export default function ConnectPage() {
   const openApiUrl = `${baseUrl}/api/openapi.json`;
   const authorizeUrl = `${baseUrl}/api/oauth/authorize`;
   const tokenUrl = `${baseUrl}/api/oauth/token`;
+  const registerUrl = `${baseUrl}/api/oauth/register`;
+  const mcpUrl = `${baseUrl}/api/mcp`;
   const mcpSseUrl = `${baseUrl}/api/mcp/sse`;
-  const mcpMessageUrl = `${baseUrl}/api/mcp/message`;
+  const prmUrl = `${baseUrl}/.well-known/oauth-protected-resource`;
+  const authMetadataUrl = `${baseUrl}/.well-known/oauth-authorization-server`;
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-10">
@@ -27,9 +30,49 @@ export default function ConnectPage() {
           </p>
         </header>
 
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-zinc-900">Claude Chat (browser) — quick start with ngrok</h2>
+          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
+            <li>Run the demo: <code className="font-mono">npm run dev:clean</code></li>
+            <li>In another terminal: <code className="font-mono">ngrok http 3000</code></li>
+            <li>Copy the ngrok HTTPS URL (e.g. <code className="font-mono">https://abc123.ngrok-free.app</code>)</li>
+            <li>
+              Open Claude → Settings → Connectors → Add custom connector
+            </li>
+            <li>
+              MCP server URL: <code className="font-mono">{mcpUrl}</code> (use your ngrok URL as host)
+            </li>
+            <li>Click Connect — Claude runs OAuth automatically via the well-known endpoints below</li>
+            <li>
+              Sign in at <code className="font-mono">/login</code> with the same username you use during OAuth
+            </li>
+            <li>Ask Claude: &quot;What products do you have?&quot; then &quot;Add 2 Nike shoes to my cart&quot;</li>
+          </ol>
+          <p className="mt-4 text-sm text-zinc-600">
+            ngrok URLs matching <code className="font-mono">*.ngrok-free.app</code> and{' '}
+            <code className="font-mono">*.ngrok.io</code> are allowed for OAuth redirects automatically.
+          </p>
+        </section>
+
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-zinc-900">Shared endpoints</h2>
           <dl className="mt-4 space-y-3 text-sm">
+            <div>
+              <dt className="font-medium text-zinc-700">MCP (Streamable HTTP)</dt>
+              <dd className="mt-1 break-all font-mono text-zinc-600">{mcpUrl}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-zinc-700">MCP (legacy SSE)</dt>
+              <dd className="mt-1 break-all font-mono text-zinc-600">{mcpSseUrl}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-zinc-700">Protected resource metadata</dt>
+              <dd className="mt-1 break-all font-mono text-zinc-600">{prmUrl}</dd>
+            </div>
+            <div>
+              <dt className="font-medium text-zinc-700">Authorization server metadata</dt>
+              <dd className="mt-1 break-all font-mono text-zinc-600">{authMetadataUrl}</dd>
+            </div>
             <div>
               <dt className="font-medium text-zinc-700">OpenAPI</dt>
               <dd className="mt-1 break-all font-mono text-zinc-600">{openApiUrl}</dd>
@@ -43,6 +86,10 @@ export default function ConnectPage() {
               <dd className="mt-1 break-all font-mono text-zinc-600">{tokenUrl}</dd>
             </div>
             <div>
+              <dt className="font-medium text-zinc-700">OAuth register (DCR)</dt>
+              <dd className="mt-1 break-all font-mono text-zinc-600">{registerUrl}</dd>
+            </div>
+            <div>
               <dt className="font-medium text-zinc-700">Scopes</dt>
               <dd className="mt-1 font-mono text-zinc-600">cart:read cart:write</dd>
             </div>
@@ -51,6 +98,25 @@ export default function ConnectPage() {
               <dd className="mt-1 font-mono text-zinc-600">lite-toon-demo</dd>
             </div>
           </dl>
+        </section>
+
+        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-zinc-900">Claude connector instructions</h2>
+          <pre className="mt-4 whitespace-pre-wrap rounded-lg bg-zinc-100 p-4 text-xs text-zinc-800">
+{`You are the shopping assistant for LiteShop (Lite-Toon demo store).
+
+Tools:
+- getProducts: list catalog (Nike Shoes p1, Adidas T-Shirt p2, Puma Socks p3)
+- getCart: show the user's current cart
+- addToCart: add items (productId + quantity)
+- clearCart: empty the cart
+
+Rules:
+- Call getProducts first if you need product IDs
+- Confirm add/clear actions with quantities and running total
+- Prices are in EUR
+- Each user has a private cart tied to their OAuth login`}
+          </pre>
         </section>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
@@ -65,16 +131,6 @@ export default function ConnectPage() {
         </section>
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-zinc-900">Claude (MCP)</h2>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
-            <li>Connect your MCP client to the SSE endpoint: <code className="font-mono">{mcpSseUrl}</code></li>
-            <li>The server advertises the message endpoint: <code className="font-mono">{mcpMessageUrl}</code></li>
-            <li>Send JSON-RPC requests with header <code className="font-mono">Authorization: Bearer &lt;token&gt;</code></li>
-            <li>Obtain the token via the OAuth flow above.</li>
-          </ol>
-        </section>
-
-        <section className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-zinc-900">Gemini (Extensions / OpenAPI)</h2>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-zinc-700">
             <li>Import the same OpenAPI from <code className="font-mono">{openApiUrl}</code> in Google AI Studio or a Gem.</li>
@@ -84,7 +140,7 @@ export default function ConnectPage() {
         </section>
 
         <p className="text-sm text-zinc-500">
-          <a href="/" className="underline hover:text-zinc-700">Back to demo chat</a>
+          <a href="/" className="underline hover:text-zinc-700">Back to demo shop</a>
           {' · '}
           <a href="/login" className="underline hover:text-zinc-700">OAuth login</a>
         </p>

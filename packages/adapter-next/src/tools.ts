@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { UniversalAgent } from '@lite-toon/core';
+import { UniversalAgent, capabilityRequiresAuth } from '@lite-toon/core';
 
 function extractBearerToken(req: NextRequest): string | undefined {
   const auth = req.headers.get('authorization');
@@ -31,10 +31,11 @@ export function createNextToolsHandler(agent: UniversalAgent) {
         return jsonError(`Capability '${name}' not found.`, 404);
       }
 
+      const requiresAuth = capabilityRequiresAuth(capability);
       const access = await agent.gatekeeper.checkAccess(
         { ip, agentId, accessToken },
         {
-          requireAuth: true,
+          requireAuth: requiresAuth,
           requiredScopes: capability.scopes,
         }
       );

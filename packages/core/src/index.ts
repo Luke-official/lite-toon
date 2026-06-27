@@ -1,6 +1,7 @@
 export { UniversalAgent } from './agent';
 export { CapabilityRegistry } from './registry';
 export { buildOpenApiDocument } from './openapi';
+export { capabilityRequiresAuth } from './capability-auth';
 export {
   SecurityGatekeeper,
   InMemoryRateLimiterStore,

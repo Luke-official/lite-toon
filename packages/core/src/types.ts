@@ -46,7 +46,7 @@ export interface Capability {
   name: string;
   description: string;
   schema?: Record<string, any>;
-  /** OAuth scopes required to invoke this capability. */
+  /** OAuth scopes required to invoke this capability. Use `[]` for public (no login) tools. */
   scopes?: string[];
   execute(params: any, context?: ExecutionContext): Promise<AgentResponse>;
 }

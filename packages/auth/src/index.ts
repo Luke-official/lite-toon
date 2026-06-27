@@ -6,9 +6,12 @@ export type {
   AuthorizationCodeRecord,
   AccessTokenRecord,
   SessionRecord,
+  RegisteredClientRecord,
   AuthorizeRequest,
   AuthorizeResult,
   TokenRequest,
   TokenResponse,
+  ClientRegistrationRequest,
+  ClientRegistrationResponse,
   OAuthServerConfig,
 } from './types';

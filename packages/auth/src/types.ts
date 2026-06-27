@@ -27,6 +27,13 @@ export interface SessionRecord {
   expiresAt: number;
 }
 
+export interface RegisteredClientRecord {
+  clientId: string;
+  clientName?: string;
+  redirectUris: string[];
+  createdAt: number;
+}
+
 export interface AuthStore {
   upsertUser(username: string): Promise<AuthUser>;
   getUserById(userId: string): Promise<AuthUser | null>;
@@ -37,6 +44,8 @@ export interface AuthStore {
   saveSession(record: SessionRecord): Promise<void>;
   getSession(sessionId: string): Promise<SessionRecord | null>;
   deleteSession(sessionId: string): Promise<void>;
+  saveRegisteredClient?(record: RegisteredClientRecord): Promise<void>;
+  getRegisteredClient?(clientId: string): Promise<RegisteredClientRecord | null>;
 }
 
 export interface AuthorizeRequest {
@@ -59,6 +68,7 @@ export interface TokenRequest {
   redirectUri?: string;
   clientId?: string;
   codeVerifier?: string;
+  refreshToken?: string;
 }
 
 export interface TokenResponse {
@@ -66,13 +76,29 @@ export interface TokenResponse {
   token_type: 'Bearer';
   expires_in: number;
   scope: string;
+  refresh_token?: string;
+}
+
+export interface ClientRegistrationRequest {
+  redirect_uris: string[];
+  client_name?: string;
+}
+
+export interface ClientRegistrationResponse {
+  client_id: string;
+  client_id_issued_at: number;
+  redirect_uris: string[];
+  client_name?: string;
+  token_endpoint_auth_method: 'none';
 }
 
 export interface OAuthServerConfig {
   store: AuthStore;
   clientId: string;
   allowedRedirectUris: string[];
+  allowedRedirectUriPatterns?: RegExp[];
   tokenTtlSeconds?: number;
   codeTtlSeconds?: number;
   sessionTtlSeconds?: number;
+  refreshTokenTtlSeconds?: number;
 }

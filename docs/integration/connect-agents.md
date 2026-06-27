@@ -132,14 +132,30 @@ Always confirm actions with the user.
 
 ## Claude (MCP)
 
-Claude connects via the **Model Context Protocol** using SSE + JSON-RPC.
+Claude connects via the **Model Context Protocol**. Use **Streamable HTTP** at `/api/mcp` for Claude Chat (browser); legacy SSE at `/api/mcp/sse` remains supported.
 
-### Setup
+### Claude Chat (browser) with ngrok
 
-1. Configure your MCP client with SSE URL: `https://your-domain/api/mcp/sse`
-2. Client reads `endpoint` event → discovers message URL
-3. Complete OAuth to obtain Bearer access token
-4. Send JSON-RPC to message URL with `Authorization: Bearer <token>`
+1. Start the demo: `npm run dev:clean`
+2. Expose HTTPS: `ngrok http 3000`
+3. In Claude → **Settings → Connectors → Add custom connector**
+4. MCP server URL: `https://<your-ngrok-host>/api/mcp`
+5. Click **Connect** — Claude discovers OAuth via `/.well-known/oauth-protected-resource`
+6. Sign in at `https://<your-ngrok-host>/login` when redirected (use a username you'll remember)
+7. Ask Claude: *"What products do you have?"* then *"Add 2 Nike shoes to my cart"*
+8. Optional: open the shop at the same ngrok URL (signed in) to see the cart update
+
+ngrok hosts matching `*.ngrok-free.app` and `*.ngrok.io` are allowed for OAuth redirects automatically.
+
+### OAuth discovery endpoints
+
+| Resource | URL |
+|---|---|
+| Protected resource metadata | `GET /.well-known/oauth-protected-resource` |
+| Authorization server metadata | `GET /.well-known/oauth-authorization-server` |
+| Dynamic client registration | `POST /api/oauth/register` |
+
+Unauthenticated `tools/call` requests return **HTTP 401** with a `WWW-Authenticate` header pointing at the metadata URL.
 
 ### Supported MCP methods
 
@@ -164,19 +180,12 @@ Claude connects via the **Model Context Protocol** using SSE + JSON-RPC.
 }
 ```
 
-### Claude Desktop config (example)
+### Legacy SSE setup
 
-```json
-{
-  "mcpServers": {
-    "lite-toon-shop": {
-      "url": "https://your-domain/api/mcp/sse"
-    }
-  }
-}
-```
-
-OAuth must be completed separately to obtain the Bearer token for `tools/call`.
+1. Configure your MCP client with SSE URL: `https://your-domain/api/mcp/sse`
+2. Client reads `endpoint` event → discovers message URL
+3. Complete OAuth to obtain Bearer access token
+4. Send JSON-RPC to message URL with `Authorization: Bearer <token>`
 
 See [MCP Integration](../concepts/mcp.md) for the full protocol reference.
 
@@ -184,9 +193,12 @@ See [MCP Integration](../concepts/mcp.md) for the full protocol reference.
 
 | Problem | Solution |
 |---|---|
+| Claude cannot connect to localhost | Use ngrok or deploy to a public HTTPS URL |
+| OAuth redirect fails | Ensure ngrok URL is HTTPS; check `allowedRedirectUris` |
 | SSE connection drops | Check reverse proxy supports long-lived connections |
-| tools/call returns -32001 | Missing or expired Bearer token |
+| tools/call returns 401 | Complete OAuth connector flow in Claude settings |
 | Empty tools list | Verify capabilities are registered on the agent |
+| Cart not visible in browser | Sign in at `/login` with the same username used during Claude OAuth |
 
 ---
 

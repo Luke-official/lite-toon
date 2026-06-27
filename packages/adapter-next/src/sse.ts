@@ -24,7 +24,6 @@ export function createMCPSseHandler(agent: UniversalAgent) {
       await writer.write(encoder.encode(message));
     };
 
-    // Determine the host and protocol to build the absolute callback URL for MCP messages
     const host = req.headers.get('host') || 'localhost:3000';
     const protocol = req.headers.get('x-forwarded-proto') || 'http';
     const endpoint = `${protocol}://${host}/api/mcp/message`;

@@ -63,8 +63,9 @@ export function getCartItemCount(cart: CartItem[]): number {
 
 export const getProducts: Capability = {
   name: 'getProducts',
-  description: 'Returns the list of available products.',
-  scopes: ['cart:read'],
+  description:
+    'Returns the product catalog (public, no login). IDs: p1 Nike Shoes (€120), p2 Adidas T-Shirt (€35), p3 Puma Socks (€15).',
+  scopes: [],
   execute: async () => ({
     success: true,
     data: productsDB,
@@ -87,7 +88,8 @@ export const getCart: Capability = {
 
 export const addToCart: Capability = {
   name: 'addToCart',
-  description: 'Adds a product to the user cart.',
+  description:
+    'Adds a product to the user cart. Use productId from getProducts: p1, p2, or p3.',
   scopes: ['cart:write'],
   schema: {
     type: 'object',

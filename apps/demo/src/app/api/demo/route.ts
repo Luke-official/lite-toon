@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { formatToon, parseToon } from '@lite-toon/bridge';
-import { createNextAgentHandler } from '@lite-toon/bridge/next';
+import { createNextAgentHandler, SESSION_COOKIE } from '@lite-toon/bridge/next';
 import {
   enrichCart,
   getCartTotal,
@@ -10,18 +10,35 @@ import {
   Product,
 } from '@/demo/capabilities';
 import { agent } from '@/agent';
-import { oauthServer } from '@/lib/auth';
+import { oauthServer, authStore } from '@/lib/auth';
 
 const adapterHandler = createNextAgentHandler(agent);
 const DEMO_SCOPES = ['cart:read', 'cart:write'];
 let demoAccessToken: string | null = null;
 
-async function getDemoAccessToken(): Promise<string> {
-  if (demoAccessToken) return demoAccessToken;
+async function resolveRequestUserId(req: NextRequest): Promise<string> {
+  const sessionId = req.cookies.get(SESSION_COOKIE)?.value;
+  if (sessionId) {
+    const userId = await oauthServer.resolveSession(sessionId);
+    if (userId) return userId;
+  }
+
   const session = await oauthServer.login('demo-ui-user');
-  const token = await oauthServer.issueAccessTokenForUser(session.userId, DEMO_SCOPES);
-  demoAccessToken = token.access_token;
-  return demoAccessToken;
+  return session.userId;
+}
+
+async function getDemoAccessToken(userId?: string): Promise<string> {
+  if (!userId) {
+    if (demoAccessToken) return demoAccessToken;
+    const session = await oauthServer.login('demo-ui-user');
+    userId = session.userId;
+    const token = await oauthServer.issueAccessTokenForUser(userId, DEMO_SCOPES);
+    demoAccessToken = token.access_token;
+    return demoAccessToken;
+  }
+
+  const token = await oauthServer.issueAccessTokenForUser(userId, DEMO_SCOPES);
+  return token.access_token;
 }
 
 function buildAssistantMessage(action: string, params: Record<string, unknown>, cart: CartItem[]) {
@@ -79,9 +96,14 @@ function recordsToProducts(records: Record<string, unknown>[]): Product[] {
     }));
 }
 
-async function runThroughAdapter(req: NextRequest, action: string, params: Record<string, unknown>) {
+async function runThroughAdapter(
+  req: NextRequest,
+  action: string,
+  params: Record<string, unknown>,
+  userId: string
+) {
   const toonRequestPayload = formatToon('Action', [{ action, params: JSON.stringify(params) }]);
-  const accessToken = await getDemoAccessToken();
+  const accessToken = await getDemoAccessToken(userId);
 
   const mockReq = new NextRequest(new URL(req.url), {
     method: 'POST',
@@ -108,12 +130,13 @@ async function runThroughAdapter(req: NextRequest, action: string, params: Recor
   return { toonRequestPayload, toonResponsePayload };
 }
 
-export async function GET() {
-  const token = await getDemoAccessToken();
+export async function GET(req: NextRequest) {
+  const userId = await resolveRequestUserId(req);
+  const user = await authStore.getUserById(userId);
   const cartResult = await agent.registry.execute(
     'getCart',
     {},
-    { userId: (await oauthServer.resolve(token))!.userId, agentId: 'demo-ui', scopes: DEMO_SCOPES }
+    { userId, agentId: 'demo-ui', scopes: DEMO_SCOPES }
   );
   const cart = (cartResult.data ?? []) as CartItem[];
 
@@ -122,6 +145,7 @@ export async function GET() {
     cart: enrichCart(cart),
     cartTotal: getCartTotal(cart),
     cartItemCount: getCartItemCount(cart),
+    user: user ? { userId, username: user.username } : null,
   });
 }
 
@@ -170,7 +194,13 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const { toonRequestPayload, toonResponsePayload } = await runThroughAdapter(req, action, params);
+    const userId = await resolveRequestUserId(req);
+    const { toonRequestPayload, toonResponsePayload } = await runThroughAdapter(
+      req,
+      action,
+      params,
+      userId
+    );
     const records = parseAdapterRecords(toonResponsePayload);
 
     let cart: CartItem[] = [];
@@ -180,12 +210,10 @@ export async function POST(req: NextRequest) {
       cart = recordsToCart(records);
     } else if (action === 'getProducts') {
       products = recordsToProducts(records);
-      const token = await getDemoAccessToken();
-      const resolved = await oauthServer.resolve(token);
       const cartResult = await agent.registry.execute(
         'getCart',
         {},
-        { userId: resolved!.userId, agentId: 'demo-ui', scopes: DEMO_SCOPES }
+        { userId, agentId: 'demo-ui', scopes: DEMO_SCOPES }
       );
       cart = (cartResult.data ?? []) as CartItem[];
     }

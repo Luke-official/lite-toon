@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PRODUCT_CATALOG } from "@/demo/capabilities";
+import { demoFetch } from "@/lib/demo-fetch";
 
 interface Product {
   id: string;
@@ -40,7 +42,7 @@ function formatPrice(value: number) {
 }
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([...PRODUCT_CATALOG]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartTotal, setCartTotal] = useState(0);
   const [cartItemCount, setCartItemCount] = useState(0);
@@ -56,15 +58,31 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [showToonLog, setShowToonLog] = useState(false);
   const [cartPulse, setCartPulse] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch("/api/demo")
-      .then((res) => res.json())
+  const loadStore = () =>
+    demoFetch("/api/demo")
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to load shop (${res.status})`);
+        return res.json();
+      })
       .then((data) => {
-        setProducts(data.products ?? []);
+        setProducts(data.products ?? [...PRODUCT_CATALOG]);
         setCart(data.cart ?? []);
         setCartTotal(data.cartTotal ?? 0);
         setCartItemCount(data.cartItemCount ?? 0);
+        setUsername(data.user?.username ?? null);
+      })
+      .catch(() => {
+        setProducts([...PRODUCT_CATALOG]);
+      });
+
+  useEffect(() => {
+    loadStore();
+    demoFetch("/api/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.username) setUsername(data.username);
       })
       .catch(() => {});
   }, []);
@@ -92,7 +110,7 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/demo", {
+      const res = await demoFetch("/api/demo", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage }),
@@ -152,6 +170,16 @@ export default function Home() {
           <p className="text-sm text-stone-500">AI agent e-commerce demo</p>
         </div>
         <div className="flex items-center gap-4">
+          {!username ? (
+            <a
+              href="/login?returnUrl=/"
+              className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 hover:bg-amber-100"
+            >
+              Sign in to sync cart with Claude
+            </a>
+          ) : (
+            <span className="text-sm text-stone-500">Signed in as {username}</span>
+          )}
           <a href="/connect" className="text-sm text-stone-600 underline hover:text-stone-900">
             Connect AI
           </a>
