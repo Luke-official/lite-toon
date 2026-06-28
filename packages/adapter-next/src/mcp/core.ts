@@ -1,3 +1,6 @@
+import { capabilityRequiresAuth } from '@lite-toon/core';
+import { isSecurityAuthError } from '../http/errors';
+
 export interface McpAgent {
   registry: {
     exportMcpTools(): unknown[];
@@ -61,17 +64,6 @@ function formatToolResult(response: { success: boolean; message?: string; data?:
     content: [{ type: 'text', text: JSON.stringify(response.data ?? null) }],
     isError: false,
   };
-}
-
-function isAuthError(message: string): boolean {
-  return message.includes('UNAUTHORIZED') || message.includes('FORBIDDEN');
-}
-
-function capabilityRequiresAuth(capability: { scopes?: string[] }): boolean {
-  if (!capability.scopes) {
-    return true;
-  }
-  return capability.scopes.length > 0;
 }
 
 export function mcpToolCallRequiresAuth(
@@ -183,11 +175,11 @@ export async function handleMcpJsonRpc(
         result: formatToolResult(response),
       };
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Capability execution failed.';
-      if (isAuthError(message)) {
+      if (isSecurityAuthError(error)) {
         throw error;
       }
 
+      const message = error instanceof Error ? error.message : 'Capability execution failed.';
       return {
         kind: 'result',
         id,

@@ -34,6 +34,8 @@ export interface RegisteredClientRecord {
   createdAt: number;
 }
 
+export type RegisteredClient = RegisteredClientRecord;
+
 export interface AuthStore {
   upsertUser(username: string): Promise<AuthUser>;
   getUserById(userId: string): Promise<AuthUser | null>;

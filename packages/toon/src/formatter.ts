@@ -5,53 +5,42 @@
  * @param records - An array of generic objects to format.
  * @returns The formatted TOON string.
  */
-export function formatToon(entityName: string, records?: Record<string, any>[] | null): string {
-  // Handle empty or null array
+export function formatToon(entityName: string, records?: Record<string, unknown>[] | null): string {
   if (!records || records.length === 0) {
     return `${entityName}[0]{}:\n`;
   }
 
-  // Extract all unique keys present in the records for robustness
   const keySet = new Set<string>();
   for (const record of records) {
     if (record && typeof record === 'object') {
-      Object.keys(record).forEach(key => keySet.add(key));
+      Object.keys(record).forEach((key) => keySet.add(key));
     }
   }
 
   const keys = Array.from(keySet);
-  const numRecords = records.length;
+  const lines: string[] = [`${entityName}[${records.length}]{${keys.join(', ')}}:\n`];
 
-  // Build the header line (Line 1)
-  let toonString = `${entityName}[${numRecords}]{${keys.join(', ')}}:\n`;
-
-  // Build the subsequent lines
   for (const record of records) {
-    const values = keys.map(key => {
+    const values = keys.map((key) => {
       const value = record ? record[key] : undefined;
-      
-      // If the value is a string, wrap it in double quotes and escape it
+
       if (typeof value === 'string') {
         return `"${value.replace(/"/g, '\\"')}"`;
       }
-      
-      // Handle null or undefined values
+
       if (value === null || value === undefined) {
-        return "null";
+        return 'null';
       }
 
-      // Handle nested objects or arrays (fallback)
       if (typeof value === 'object') {
         return JSON.stringify(value);
       }
 
-      // Other types (numbers, booleans)
       return String(value);
     });
 
-    // 2-space indentation
-    toonString += `  ${values.join(', ')}\n`;
+    lines.push(`  ${values.join(', ')}\n`);
   }
 
-  return toonString;
+  return lines.join('');
 }

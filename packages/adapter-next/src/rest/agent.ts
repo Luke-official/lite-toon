@@ -1,23 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UniversalAgent } from '@lite-toon/core';
-import { formatToon } from '@lite-toon/toon';
-import { parseToon } from '@lite-toon/toon';
+import { formatToon, parseToon } from '@lite-toon/toon';
+import { jsonError, securityErrorStatus } from '../http/errors';
 
 function wantsJsonResponse(req: NextRequest, isJsonRequest: boolean): boolean {
   const accept = req.headers.get('accept') ?? '';
   return isJsonRequest || accept.includes('application/json');
 }
 
-function jsonError(message: string, status: number = 400) {
-  return NextResponse.json({ success: false, message }, { status });
-}
-
 /**
  * Creates a Next.js App Router API handler (POST) for standard REST/Webhook interactions.
  * Parses incoming TOON/JSON requests, enforces security, and executes capabilities.
- *
- * @param agent The UniversalAgent instance.
- * @returns A Next.js API route handler function.
  */
 export function createNextAgentHandler(agent: UniversalAgent) {
   return async function POST(req: NextRequest) {
@@ -38,9 +31,10 @@ export function createNextAgentHandler(agent: UniversalAgent) {
 
       const rawBody = await req.text();
       let action: string;
-      let params: any;
+      let params: unknown;
       const isJsonRequest =
-        req.headers.get('content-type')?.includes('application/json') || rawBody.trim().startsWith('{');
+        req.headers.get('content-type')?.includes('application/json') ||
+        rawBody.trim().startsWith('{');
 
       if (isJsonRequest) {
         const body = JSON.parse(rawBody);
@@ -60,7 +54,10 @@ export function createNextAgentHandler(agent: UniversalAgent) {
         action = records[0].action;
         let rawParams = records[0].params;
 
-        if (typeof rawParams === 'string' && (rawParams.startsWith('{') || rawParams.startsWith('['))) {
+        if (
+          typeof rawParams === 'string' &&
+          (rawParams.startsWith('{') || rawParams.startsWith('['))
+        ) {
           try {
             rawParams = JSON.parse(rawParams);
           } catch {
@@ -88,7 +85,7 @@ export function createNextAgentHandler(agent: UniversalAgent) {
         return NextResponse.json(response, { status: 200 });
       }
 
-      let resultRecords: any[] = [];
+      let resultRecords: Record<string, unknown>[] = [];
       let entityName = 'Result';
 
       if (response.data) {
@@ -102,21 +99,14 @@ export function createNextAgentHandler(agent: UniversalAgent) {
         status: 200,
         headers: { 'Content-Type': 'text/plain' },
       });
-    } catch (error: any) {
-      const errorMessage = error.message || 'Unknown internal server error.';
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown internal server error.';
       const isJson =
         req.headers.get('content-type')?.includes('application/json') ||
         (req.headers.get('accept') ?? '').includes('application/json');
 
       if (isJson) {
-        const status = errorMessage.includes('UNAUTHORIZED')
-          ? 401
-          : errorMessage.includes('FORBIDDEN')
-            ? 403
-            : errorMessage.includes('RATE_LIMIT')
-              ? 429
-              : 400;
-        return jsonError(errorMessage, status);
+        return jsonError(errorMessage, securityErrorStatus(error));
       }
 
       const errorRecords = [{ message: errorMessage }];

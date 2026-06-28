@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UniversalAgent, capabilityRequiresAuth } from '@lite-toon/core';
-
-function extractBearerToken(req: NextRequest): string | undefined {
-  const auth = req.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) return undefined;
-  return auth.replace('Bearer ', '');
-}
-
-function jsonError(message: string, status: number = 400) {
-  return NextResponse.json({ success: false, message }, { status });
-}
+import { extractBearerToken } from '../http/request';
+import { jsonError, securityErrorStatus } from '../http/errors';
 
 /**
  * Creates a dynamic tools route handler for OpenAPI-based agent integrations.
@@ -52,16 +44,9 @@ export function createNextToolsHandler(agent: UniversalAgent) {
       }
 
       return NextResponse.json(response, { status: 200 });
-    } catch (error: any) {
-      const message = error.message || 'Unknown internal server error.';
-      const status = message.includes('UNAUTHORIZED')
-        ? 401
-        : message.includes('FORBIDDEN')
-          ? 403
-          : message.includes('RATE_LIMIT')
-            ? 429
-            : 400;
-      return jsonError(message, status);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown internal server error.';
+      return jsonError(message, securityErrorStatus(error));
     }
   };
 }

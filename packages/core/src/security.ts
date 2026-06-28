@@ -1,3 +1,4 @@
+import { SecurityError, SecurityErrorCode } from './errors/SecurityError';
 import {
   AccessCheckOptions,
   ResolvedAccess,
@@ -85,31 +86,35 @@ export class SecurityGatekeeper {
     const count = await this.store.increment(key);
 
     if (count > this.maxRequests) {
-      throw new Error('TOON_RATE_LIMIT_EXCEEDED: Too many requests.');
+      throw new SecurityError(SecurityErrorCode.RATE_LIMIT_EXCEEDED, 'Too many requests.');
     }
 
     if (context.apiKey && context.apiKey !== 'secret-dummy-token') {
-      throw new Error('TOON_UNAUTHORIZED: Invalid API Key.');
+      throw new SecurityError(SecurityErrorCode.UNAUTHORIZED, 'Invalid API Key.');
     }
 
     if (options.requireAuth || context.accessToken) {
       if (!context.accessToken) {
-        throw new Error('TOON_UNAUTHORIZED: Bearer access token is required.');
+        throw new SecurityError(SecurityErrorCode.UNAUTHORIZED, 'Bearer access token is required.');
       }
 
       if (!this.tokenResolver) {
-        throw new Error('TOON_UNAUTHORIZED: Token resolver is not configured.');
+        throw new SecurityError(SecurityErrorCode.UNAUTHORIZED, 'Token resolver is not configured.');
       }
 
       const resolved = await this.tokenResolver.resolve(context.accessToken);
       if (!resolved) {
-        throw new Error('TOON_UNAUTHORIZED: Invalid or expired access token.');
+        throw new SecurityError(SecurityErrorCode.UNAUTHORIZED, 'Invalid or expired access token.');
       }
 
       if (options.requiredScopes && options.requiredScopes.length > 0) {
         const missing = options.requiredScopes.filter((scope) => !resolved.scopes.includes(scope));
         if (missing.length > 0) {
-          throw new Error(`TOON_FORBIDDEN: Missing scopes: ${missing.join(', ')}`);
+          throw new SecurityError(
+            SecurityErrorCode.FORBIDDEN,
+            `Missing scopes: ${missing.join(', ')}`,
+            { missingScopes: missing }
+          );
         }
       }
 

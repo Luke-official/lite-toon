@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getRequestBaseUrl } from '../http/request';
 
 export interface McpOAuthOptions {
   resourcePath?: string;
   scopes?: string[];
-}
-
-export function getRequestBaseUrl(req: NextRequest): string {
-  const host = req.headers.get('host') || 'localhost:3000';
-  const protocol = req.headers.get('x-forwarded-proto') || 'http';
-  return `${protocol}://${host}`;
 }
 
 export function buildProtectedResourceMetadata(baseUrl: string, options: McpOAuthOptions = {}) {

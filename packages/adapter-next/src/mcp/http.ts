@@ -1,41 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { UniversalAgent } from '@lite-toon/core';
-import {
-  handleMcpJsonRpc,
-  JsonRpcRequest,
-  mcpToolCallRequiresAuth,
-} from './mcp-core';
-import { createMcpUnauthorizedResponse, getRequestBaseUrl } from './mcp-oauth';
-
-function extractBearerToken(req: NextRequest): string | undefined {
-  const auth = req.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) return undefined;
-  return auth.replace('Bearer ', '');
-}
-
-function jsonRpcResponse(outcome: Awaited<ReturnType<typeof handleMcpJsonRpc>>) {
-  if (outcome.kind === 'no-content') {
-    return new NextResponse(null, { status: 204 });
-  }
-
-  if (outcome.kind === 'error') {
-    return NextResponse.json({
-      jsonrpc: '2.0',
-      id: outcome.id ?? null,
-      error: { code: outcome.code, message: outcome.message, data: outcome.data },
-    });
-  }
-
-  return NextResponse.json({
-    jsonrpc: '2.0',
-    id: outcome.id ?? null,
-    result: outcome.result,
-  });
-}
-
-function isUnauthorizedError(message: string): boolean {
-  return message.includes('UNAUTHORIZED') || message.includes('FORBIDDEN');
-}
+import { SecurityError, SecurityErrorCode, UniversalAgent } from '@lite-toon/core';
+import { extractBearerToken, getRequestBaseUrl } from '../http/request';
+import { isSecurityAuthError } from '../http/errors';
+import { handleMcpJsonRpc, JsonRpcRequest, mcpToolCallRequiresAuth } from './core';
+import { jsonRpcResponse } from './json-rpc';
+import { createMcpUnauthorizedResponse } from './oauth-metadata';
 
 export interface MCPHttpHandlerOptions {
   requireAuthForToolsCall?: boolean;
@@ -130,12 +99,15 @@ export function createMCPStreamableHttpHandler(
       response.headers.set('Mcp-Session-Id', sessionId);
       return response;
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Internal error';
-      if (isUnauthorizedError(message)) {
+      if (isSecurityAuthError(error)) {
         return createMcpUnauthorizedResponse(req);
       }
 
-      const code = message.includes('UNAUTHORIZED') ? -32001 : -32603;
+      const message = error instanceof Error ? error.message : 'Internal error';
+      const code =
+        error instanceof SecurityError && error.code === SecurityErrorCode.UNAUTHORIZED
+          ? -32001
+          : -32603;
       return NextResponse.json({
         jsonrpc: '2.0',
         id: payload.id ?? null,
