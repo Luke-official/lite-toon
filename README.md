@@ -12,6 +12,8 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 <br/>
 
+[![CI](https://github.com/Luke-official/lite-toon/actions/workflows/ci.yml/badge.svg)](https://github.com/Luke-official/lite-toon/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
 [![MCP](https://img.shields.io/badge/MCP-Ready-6366F1?style=for-the-badge)](https://modelcontextprotocol.io/)
@@ -19,7 +21,7 @@ Under the hood, Lite-Toon is a **framework-agnostic TypeScript SDK** that connec
 
 <br/>
 
-[Quick Start](#-quick-start) · [Documentation](docs/README.md) · [Connect Claude](#-connect-claude) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations)
+[Quick Start](#-quick-start) · [Documentation](docs/README.md) · [Connect Claude](#-connect-claude) · [TOON](#-what-is-toon) · [Architecture](#-architecture) · [API](#-api-reference) · [Security](#-security--demo-limitations) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md)
 
 </div>
 
@@ -480,9 +482,11 @@ PRs welcome — bug fixes, adapters, docs, and tests.
 
 See **[CONTRIBUTING.md](CONTRIBUTING.md)** for setup, dependency rules, code style, and the pull request workflow.
 
+Please read our **[Code of Conduct](CODE_OF_CONDUCT.md)**. To report security issues privately, see **[SECURITY.md](SECURITY.md)**.
+
 **Golden rule:** `packages/core` and `packages/toon` never import from adapters or frameworks. Demo code lives in `apps/demo/`.
 
-Licensed under [MIT](LICENSE).
+Licensed under [MIT](LICENSE). See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ---
 

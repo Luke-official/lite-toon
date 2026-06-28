@@ -2,6 +2,14 @@
   "name": "lite-toon",
   "version": "0.1.0",
   "private": true,
+  "description": "Connect AI agents to your web app via OAuth, MCP, and the TOON wire format",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git"
+  },
+  "bugs": "https://github.com/Luke-official/lite-toon/issues",
+  "homepage": "https://github.com/Luke-official/lite-toon#readme",
   "packageManager": "npm@10.9.2",
   "workspaces": [
     "apps/*",

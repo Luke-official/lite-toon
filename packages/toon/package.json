@@ -1,6 +1,16 @@
 {
   "name": "@lite-toon/toon",
   "version": "0.1.0",
+  "description": "TOON parser and formatter — a compact wire format for LLM agent round-trips",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/toon"
+  },
+  "bugs": "https://github.com/Luke-official/lite-toon/issues",
+  "homepage": "https://github.com/Luke-official/lite-toon#readme",
+  "keywords": ["toon", "llm", "serialization", "tokens", "ai-agents"],
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",

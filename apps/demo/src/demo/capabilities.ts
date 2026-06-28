@@ -99,7 +99,7 @@ export const addToCart: Capability = {
     },
     required: ["productId", "quantity"],
   },
-  execute: async (params: any, context) => {
+  execute: async (params: { productId?: string; quantity?: number }, context) => {
     const userId = requireUserId(context);
     const { productId, quantity } = params || {};
     if (!productId || typeof quantity !== "number") {

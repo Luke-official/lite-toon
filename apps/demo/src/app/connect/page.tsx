@@ -1,13 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 export default function ConnectPage() {
-  const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
-
-  useEffect(() => {
-    setBaseUrl(window.location.origin);
-  }, []);
+  const baseUrl =
+    typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
 
   const authorizeUrl = `${baseUrl}/api/oauth/authorize`;
   const tokenUrl = `${baseUrl}/api/oauth/token`;
@@ -17,7 +14,7 @@ export default function ConnectPage() {
   const authMetadataUrl = `${baseUrl}/.well-known/oauth-authorization-server`;
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10">
+    <main className="min-h-screen bg-zinc-50 px-4 py-10" suppressHydrationWarning>
       <div className="mx-auto max-w-3xl space-y-8">
         <header className="space-y-2">
           <p className="text-sm font-medium uppercase tracking-wide text-zinc-500">Lite-Toon Demo</p>
@@ -113,9 +110,9 @@ Rules:
         </section>
 
         <p className="text-sm text-zinc-500">
-          <a href="/" className="underline hover:text-zinc-700">Back to demo shop</a>
+          <Link href="/" className="underline hover:text-zinc-700">Back to demo shop</Link>
           {' · '}
-          <a href="/login" className="underline hover:text-zinc-700">OAuth login</a>
+          <Link href="/login" className="underline hover:text-zinc-700">OAuth login</Link>
         </p>
       </div>
     </main>

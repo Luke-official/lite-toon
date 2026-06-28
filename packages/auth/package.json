@@ -1,6 +1,16 @@
 {
   "name": "@lite-toon/auth",
   "version": "0.1.0",
+  "description": "OAuth 2.0 server with PKCE for per-user AI agent authentication",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/auth"
+  },
+  "bugs": "https://github.com/Luke-official/lite-toon/issues",
+  "homepage": "https://github.com/Luke-official/lite-toon#readme",
+  "keywords": ["oauth", "pkce", "authentication", "ai-agents", "mcp"],
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",

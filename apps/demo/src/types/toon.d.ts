@@ -5,7 +5,7 @@
 declare namespace Toon {
   export interface ParseResult {
     success: boolean;
-    data?: any;
+    data?: unknown;
     error?: string;
   }
 }

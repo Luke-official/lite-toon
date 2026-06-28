@@ -1,0 +1,52 @@
+name: Feature Request
+description: Suggest an idea or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem you're trying to solve. Check the [roadmap](https://github.com/Luke-official/lite-toon#-roadmap) first — ChatGPT, Gemini, and additional framework adapters may already be planned.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this solve? Who benefits?
+      placeholder: I want to connect Lite-Toon to Hono so I can expose MCP tools from an edge worker...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Target platform(s)
+      multiple: true
+      options:
+        - Claude (MCP)
+        - ChatGPT (Actions)
+        - Gemini
+        - Direct /api/agent (TOON)
+        - Next.js adapter
+        - Other framework adapter
+        - SDK / core
+        - Documentation
+        - Other
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I am willing to submit a PR for this feature
+          required: false

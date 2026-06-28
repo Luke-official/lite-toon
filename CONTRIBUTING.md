@@ -136,7 +136,11 @@ We welcome:
 
 The demo uses a public client ID (`lite-toon-demo`) and in-memory auth by design. If you improve security for production use, document the migration path in the PR and README.
 
-Report security vulnerabilities privately to the repository maintainer rather than in a public issue.
+Report security vulnerabilities privately via **[SECURITY.md](SECURITY.md)** — do not open public issues for them.
+
+## Code of Conduct
+
+This project follows the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to uphold it.
 
 ## What we're especially looking for
 
@@ -144,7 +148,7 @@ Report security vulnerabilities privately to the repository maintainer rather th
 - [ ] Express / Hono / Edge adapters
 - [ ] Redis-backed auth store and rate limiter
 - [ ] Cryptographically secure token generation for production configs
-- [ ] CI workflow (build + test scripts)
+- [x] CI workflow (build + test scripts)
 
 ## License
 

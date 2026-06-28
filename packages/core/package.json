@@ -1,6 +1,16 @@
 {
   "name": "@lite-toon/core",
   "version": "0.1.0",
+  "description": "UniversalAgent, capability registry, and security gatekeeper for AI agent integrations",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/core"
+  },
+  "bugs": "https://github.com/Luke-official/lite-toon/issues",
+  "homepage": "https://github.com/Luke-official/lite-toon#readme",
+  "keywords": ["ai-agents", "capabilities", "mcp", "oauth", "sdk"],
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",

@@ -1,6 +1,16 @@
 {
   "name": "@lite-toon/bridge",
   "version": "0.1.0",
+  "description": "Public SDK entry point for Lite-Toon — connect AI agents to your web app",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/bridge"
+  },
+  "bugs": "https://github.com/Luke-official/lite-toon/issues",
+  "homepage": "https://github.com/Luke-official/lite-toon#readme",
+  "keywords": ["lite-toon", "ai-agents", "mcp", "oauth", "toon", "sdk"],
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",

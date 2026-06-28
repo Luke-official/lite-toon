@@ -1,0 +1,63 @@
+name: Bug Report
+description: Report something that isn't working as expected
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please redact OAuth tokens, session cookies, and personal data from logs or payloads.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: When I call /api/mcp with tools/call, I get a 500 error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: I expected a successful tool result with cart contents.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps to reproduce the behavior.
+      placeholder: |
+        1. npm run dev:clean
+        2. Connect Claude via /connect
+        3. Ask "Add 2 Nike shoes to my cart"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Lite-Toon version or commit
+      placeholder: 0.1.0 or abc1234
+    validations:
+      required: false
+
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: v20.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or payloads
+      description: TOON/JSON responses, terminal output, or browser console errors (redact secrets).
+      render: shell
+    validations:
+      required: false

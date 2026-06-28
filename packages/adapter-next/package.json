@@ -1,6 +1,16 @@
 {
   "name": "@lite-toon/adapter-next",
   "version": "0.1.0",
+  "description": "Next.js App Router route factories for Lite-Toon (MCP, OAuth, TOON agent)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/adapter-next"
+  },
+  "bugs": "https://github.com/Luke-official/lite-toon/issues",
+  "homepage": "https://github.com/Luke-official/lite-toon#readme",
+  "keywords": ["nextjs", "mcp", "oauth", "ai-agents", "app-router"],
   "type": "module",
   "files": ["dist"],
   "main": "./dist/index.js",

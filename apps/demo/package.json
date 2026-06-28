@@ -2,6 +2,13 @@
   "name": "@lite-toon/demo",
   "version": "0.1.0",
   "private": true,
+  "description": "Reference Next.js demo app for Lite-Toon (LiteShop e-commerce PoC)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "apps/demo"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

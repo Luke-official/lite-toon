@@ -7,17 +7,17 @@ declare namespace MCP {
     jsonrpc: "2.0";
     id: string | number;
     method: string;
-    params?: any;
+    params?: unknown;
   }
 
   export interface JsonRpcResponse {
     jsonrpc: "2.0";
     id: string | number;
-    result?: any;
+    result?: unknown;
     error?: {
       code: number;
       message: string;
-      data?: any;
+      data?: unknown;
     };
   }
 }
