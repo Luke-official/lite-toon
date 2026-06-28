@@ -27,6 +27,6 @@
     "kill-port": "^2.0.1",
     "tsup": "^8.4.0",
     "turbo": "^2.5.4",
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
