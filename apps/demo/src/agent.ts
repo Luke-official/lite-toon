@@ -3,11 +3,12 @@ import {
   getProducts,
   getCart,
   addToCart,
+  removeFromCart,
   clearCart,
 } from '@/demo/capabilities';
 import { oauthServer } from '@/lib/auth';
 
 export const agent = new UniversalAgent({
   tokenResolver: oauthServer,
-  capabilities: [getProducts, getCart, addToCart, clearCart],
+  capabilities: [getProducts, getCart, addToCart, removeFromCart, clearCart],
 });

@@ -50,7 +50,7 @@ export default function Home() {
     {
       role: "assistant",
       content:
-        'Hi! I\'m the shop assistant. Ask me to add products to your cart, or say "Clear cart" to empty it.',
+        'Hi! Browse the catalog below. Sign in to use your cart and sync with Claude — then ask me to add products or say "Show products".',
     },
   ]);
   const [input, setInput] = useState("");
@@ -85,6 +85,10 @@ export default function Home() {
         if (data?.username) setUsername(data.username);
       })
       .catch(() => {});
+
+    const onFocus = () => loadStore();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const updateStoreState = (data: {
@@ -206,7 +210,9 @@ export default function Home() {
           <div className="mb-6">
             <h2 className="text-lg font-medium">Catalog</h2>
             <p className="text-sm text-stone-500">
-              Ask the assistant to add a product — the cart updates in real time.
+              {username
+                ? "Ask the assistant to add a product — the cart updates in real time."
+                : "Sign in to sync your cart with Claude, then add items here or via Claude."}
             </p>
           </div>
 
@@ -257,9 +263,21 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {cart.length === 0 ? (
               <div className="rounded-lg border border-dashed border-stone-200 p-6 text-center text-stone-400 text-sm">
-                No items in your cart.
-                <br />
-                Try: &quot;Add 2 pairs of Nike shoes to my cart&quot;
+                {username ? (
+                  <>
+                    No items in your cart.
+                    <br />
+                    Try: &quot;Add 2 pairs of Nike shoes to my cart&quot;
+                  </>
+                ) : (
+                  <>
+                    Sign in to view and sync your cart.
+                    <br />
+                    <a href="/login?returnUrl=/" className="text-amber-700 underline mt-2 inline-block">
+                      Sign in
+                    </a>
+                  </>
+                )}
               </div>
             ) : (
               cart.map((line) => (

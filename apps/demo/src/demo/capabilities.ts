@@ -126,6 +126,39 @@ export const addToCart: Capability = {
   },
 };
 
+export const removeFromCart: Capability = {
+  name: 'removeFromCart',
+  description:
+    'Removes a product from the user cart entirely. Use productId from getProducts: p1, p2, or p3.',
+  scopes: ['cart:write'],
+  schema: {
+    type: 'object',
+    properties: {
+      productId: { type: 'string' },
+    },
+    required: ['productId'],
+  },
+  execute: async (params: { productId?: string }, context) => {
+    const userId = requireUserId(context);
+    const { productId } = params ?? {};
+    if (!productId) {
+      throw new Error('productId is required.');
+    }
+
+    const cart = getUserCart(userId);
+    const index = cart.findIndex((item) => item.productId === productId);
+    if (index === -1) {
+      throw new Error(`Product ${productId} is not in the cart.`);
+    }
+
+    cart.splice(index, 1);
+    return {
+      success: true,
+      data: cart,
+    };
+  },
+};
+
 export const clearCart: Capability = {
   name: 'clearCart',
   description: 'Removes all items from the user cart.',

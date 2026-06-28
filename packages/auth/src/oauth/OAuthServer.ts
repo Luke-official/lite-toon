@@ -1,4 +1,3 @@
-import { TokenResolver, ResolvedToken } from '@lite-toon/core';
 import {
   OAuthServerConfig,
   AuthorizeRequest,
@@ -7,11 +6,12 @@ import {
   TokenResponse,
   ClientRegistrationRequest,
   ClientRegistrationResponse,
-} from '../types';
-import { ClientService } from './services/ClientService';
-import { SessionService } from './services/SessionService';
-import { TokenService } from './services/TokenService';
-import { AuthorizationService } from './services/AuthorizationService';
+} from "../types";
+import { ClientService } from "./services/ClientService";
+import { SessionService } from "./services/SessionService";
+import { TokenService } from "./services/TokenService";
+import { AuthorizationService } from "./services/AuthorizationService";
+import { TokenResolver, ResolvedToken } from "@lite-toon/core";
 
 /**
  * OAuth 2.0 authorization server with PKCE support.
@@ -64,11 +64,16 @@ export class OAuthServer implements TokenResolver {
     return this.sessions.logout(sessionId);
   }
 
-  registerClient(request: ClientRegistrationRequest): Promise<ClientRegistrationResponse> {
+  registerClient(
+    request: ClientRegistrationRequest,
+  ): Promise<ClientRegistrationResponse> {
     return this.clients.register(request);
   }
 
-  authorize(userId: string, request: AuthorizeRequest): Promise<AuthorizeResult> {
+  authorize(
+    userId: string,
+    request: AuthorizeRequest,
+  ): Promise<AuthorizeResult> {
     return this.authorization.authorize(userId, request);
   }
 
@@ -76,7 +81,10 @@ export class OAuthServer implements TokenResolver {
     return this.tokens.issue(request);
   }
 
-  issueAccessTokenForUser(userId: string, scopes: string[]): Promise<TokenResponse> {
+  issueAccessTokenForUser(
+    userId: string,
+    scopes: string[],
+  ): Promise<TokenResponse> {
     return this.tokens.issueForUser(userId, scopes);
   }
 
