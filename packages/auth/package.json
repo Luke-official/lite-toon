@@ -29,6 +29,6 @@
     "@lite-toon/core": "*"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }

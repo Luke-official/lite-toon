@@ -40,6 +40,6 @@
     "@lite-toon/toon": "*"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }

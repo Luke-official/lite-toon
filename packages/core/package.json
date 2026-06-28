@@ -26,6 +26,6 @@
     "dev": "tsup --watch"
   },
   "devDependencies": {
-    "typescript": "^5"
+    "typescript": "^6"
   }
 }
