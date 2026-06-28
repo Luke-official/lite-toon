@@ -1,7 +1,5 @@
 # Security
 
-> **Cheat sheet:** [security.md](../cheatsheets/security.md)
-
 Security model, threat considerations, and production hardening checklist for Lite-Toon deployments.
 
 > The demo app is a **reference implementation**, not a production auth system. The SDK provides building blocks; you are responsible for hardening them before exposing real user data.
@@ -91,15 +89,15 @@ Every authenticated capability call receives `userId` from token resolution. Bus
 | Path | Demo auth | Production recommendation |
 |---|---|---|
 | `POST /api/tools/*` | Bearer + scopes | Same (already enforced) |
-| `POST /api/mcp/message` (tools/call) | Bearer + scopes | Same |
-| `GET /api/mcp/sse` | None | Consider auth for production |
+| `POST /api/mcp` (tools/call) | Bearer + scopes | Same |
+| `GET /api/mcp` | None (SSE stream) | Same as POST for production |
 | `GET /api/openapi.json` | None | Public is fine (schema only) |
 | `GET /api/oauth/authorize` | Session cookie | Same + CSRF state validation |
 | `POST /api/oauth/token` | PKCE verification | Same + rate limit |
 | `POST /api/oauth/login` | None | Replace with real auth |
 | `POST /api/agent` | Optional | **Require auth** for sensitive capabilities |
-| `POST /api/demo` | Auto demo token | **Remove or restrict** to non-production |
-| `GET /api/demo` | None | Remove or protect |
+| `GET/POST/DELETE /api/cart` | Session cookie | Same + CSRF protection |
+| `GET /api/products`, `GET /api/me` | Session cookie (cart/me) | Same |
 
 ## Scope enforcement
 
@@ -151,7 +149,7 @@ class RedisRateLimiterStore implements RateLimiterStore {
 | Auth store | In-memory | Data loss, no clustering | Redis, PostgreSQL, managed IdP |
 | Session cookie | No `secure` flag | Hijack over HTTP | `secure: true` behind HTTPS |
 | `/api/agent` | Anonymous access | Unauthorized reads | `requireAuth: true` on gatekeeper |
-| `/api/demo` | Auto-issues tokens | Token leakage | Remove endpoint |
+| `/api/cart` | Session cookie only | CSRF on mutations | CSRF tokens + `sameSite: strict` |
 | Redirect URIs | Hardcoded list | Open redirect if misconfigured | Strict allowlist per environment |
 | CORS | Next.js defaults | Cross-origin abuse | Explicit CORS policy |
 | Logging | Console warnings | Token exposure in logs | Redact tokens in all logs |
@@ -165,7 +163,6 @@ class RedisRateLimiterStore implements RateLimiterStore {
 - [ ] Enable `secure: true` on session cookies
 - [ ] Deploy behind HTTPS (TLS termination)
 - [ ] Set `requireAuth: true` on `/api/agent` or disable the endpoint
-- [ ] Remove or protect `POST /api/demo`
 - [ ] Validate `allowedRedirectUris` for your exact domain(s)
 - [ ] Copy `.env.example` — never commit `.env.local`
 - [ ] Rotate any tokens pasted into logs or chat tools

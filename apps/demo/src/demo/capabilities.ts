@@ -1,4 +1,4 @@
-import { Capability, ExecutionContext } from '@lite-toon/bridge';
+import { ExecutionContext, Capability } from "@lite-toon/core";
 
 export interface Product {
   id: string;
@@ -18,9 +18,9 @@ export interface CartLine extends CartItem {
 }
 
 export const PRODUCT_CATALOG: readonly Product[] = [
-  { id: 'p1', name: 'Nike Shoes', price: 120 },
-  { id: 'p2', name: 'Adidas T-Shirt', price: 35 },
-  { id: 'p3', name: 'Puma Socks', price: 15 },
+  { id: "p1", name: "Nike Shoes", price: 120 },
+  { id: "p2", name: "Adidas T-Shirt", price: 35 },
+  { id: "p3", name: "Puma Socks", price: 15 },
 ] as const;
 
 const productsDB: Product[] = [...PRODUCT_CATALOG];
@@ -34,8 +34,8 @@ function getUserCart(userId: string): CartItem[] {
 }
 
 function requireUserId(context?: ExecutionContext): string {
-  if (!context?.userId || context.userId === 'anonymous') {
-    throw new Error('Authenticated user is required for this operation.');
+  if (!context?.userId || context.userId === "anonymous") {
+    throw new Error("Authenticated user is required for this operation.");
   }
   return context.userId;
 }
@@ -46,7 +46,7 @@ export function enrichCart(cart: CartItem[]): CartLine[] {
     const price = product?.price ?? 0;
     return {
       ...item,
-      name: product?.name ?? 'Unknown product',
+      name: product?.name ?? "Unknown product",
       price,
       subtotal: price * item.quantity,
     };
@@ -62,9 +62,9 @@ export function getCartItemCount(cart: CartItem[]): number {
 }
 
 export const getProducts: Capability = {
-  name: 'getProducts',
+  name: "getProducts",
   description:
-    'Returns the product catalog (public, no login). IDs: p1 Nike Shoes (€120), p2 Adidas T-Shirt (€35), p3 Puma Socks (€15).',
+    "Returns the product catalog (public, no login). IDs: p1 Nike Shoes (€120), p2 Adidas T-Shirt (€35), p3 Puma Socks (€15).",
   scopes: [],
   execute: async () => ({
     success: true,
@@ -73,9 +73,9 @@ export const getProducts: Capability = {
 };
 
 export const getCart: Capability = {
-  name: 'getCart',
-  description: 'Returns the current contents of the user cart.',
-  scopes: ['cart:read'],
+  name: "getCart",
+  description: "Returns the current contents of the user cart.",
+  scopes: ["cart:read"],
   execute: async (_params, context) => {
     const userId = requireUserId(context);
     const cart = getUserCart(userId);
@@ -87,23 +87,23 @@ export const getCart: Capability = {
 };
 
 export const addToCart: Capability = {
-  name: 'addToCart',
+  name: "addToCart",
   description:
-    'Adds a product to the user cart. Use productId from getProducts: p1, p2, or p3.',
-  scopes: ['cart:write'],
+    "Adds a product to the user cart. Use productId from getProducts: p1, p2, or p3.",
+  scopes: ["cart:write"],
   schema: {
-    type: 'object',
+    type: "object",
     properties: {
-      productId: { type: 'string' },
-      quantity: { type: 'number' },
+      productId: { type: "string" },
+      quantity: { type: "number" },
     },
-    required: ['productId', 'quantity'],
+    required: ["productId", "quantity"],
   },
   execute: async (params: any, context) => {
     const userId = requireUserId(context);
     const { productId, quantity } = params || {};
-    if (!productId || typeof quantity !== 'number') {
-      throw new Error('Invalid parameters for addToCart.');
+    if (!productId || typeof quantity !== "number") {
+      throw new Error("Invalid parameters for addToCart.");
     }
 
     const product = productsDB.find((p) => p.id === productId);
@@ -127,22 +127,22 @@ export const addToCart: Capability = {
 };
 
 export const removeFromCart: Capability = {
-  name: 'removeFromCart',
+  name: "removeFromCart",
   description:
-    'Removes a product from the user cart entirely. Use productId from getProducts: p1, p2, or p3.',
-  scopes: ['cart:write'],
+    "Removes a product from the user cart entirely. Use productId from getProducts: p1, p2, or p3.",
+  scopes: ["cart:write"],
   schema: {
-    type: 'object',
+    type: "object",
     properties: {
-      productId: { type: 'string' },
+      productId: { type: "string" },
     },
-    required: ['productId'],
+    required: ["productId"],
   },
   execute: async (params: { productId?: string }, context) => {
     const userId = requireUserId(context);
     const { productId } = params ?? {};
     if (!productId) {
-      throw new Error('productId is required.');
+      throw new Error("productId is required.");
     }
 
     const cart = getUserCart(userId);
@@ -160,9 +160,9 @@ export const removeFromCart: Capability = {
 };
 
 export const clearCart: Capability = {
-  name: 'clearCart',
-  description: 'Removes all items from the user cart.',
-  scopes: ['cart:write'],
+  name: "clearCart",
+  description: "Removes all items from the user cart.",
+  scopes: ["cart:write"],
   execute: async (_params, context) => {
     const userId = requireUserId(context);
     cartsByUser.set(userId, []);

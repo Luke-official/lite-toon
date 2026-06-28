@@ -1,7 +1,5 @@
 # TOON Format
 
-> **Cheat sheet:** [toon.md](../cheatsheets/toon.md)
-
 **TOON** (Token-Oriented Object Notation) is a compact, human-readable wire format designed for AI agent round-trips. Arrays of homogeneous objects become a typed header plus tabular rows — like CSV with an inline schema.
 
 Lite-Toon uses TOON on `POST /api/agent` by default. ChatGPT, Claude MCP, and Gemini integrations use JSON instead (those platforms don't natively parse TOON).

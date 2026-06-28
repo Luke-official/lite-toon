@@ -85,7 +85,6 @@ When adding features, update the relevant doc in `docs/`:
 | MCP method support | [concepts/mcp.md](docs/concepts/mcp.md) |
 | TOON format change | [concepts/toon.md](docs/concepts/toon.md) |
 | Capability flow diagrams | [concepts/capability-flows.md](docs/concepts/capability-flows.md) |
-| Cheat sheet for a topic | [cheatsheets/](docs/cheatsheets/README.md) |
 
 Full index: [docs/README.md](docs/README.md)
 

@@ -1,7 +1,5 @@
 # OAuth & Authentication
 
-> **Cheat sheet:** [oauth.md](../cheatsheets/oauth.md)
-
 Lite-Toon ships an OAuth 2.0 authorization server with **PKCE** (Proof Key for Code Exchange) so AI agents can obtain per-user Bearer tokens without a client secret.
 
 ## Overview

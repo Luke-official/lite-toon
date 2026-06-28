@@ -1,8 +1,6 @@
 # API Reference
 
-> **Cheat sheet:** [api.md](../cheatsheets/api.md)
-
-Complete reference for all HTTP endpoints exposed by the Lite-Toon demo app. Your own app wired with the SDK will expose the same routes if you follow [Next.js Integration](../integration/nextjs.md).
+Complete reference for HTTP endpoints in the Lite-Toon demo app. Endpoints are split into **webapp API** (your app's own REST, session auth) and **Lite-Toon bridge API** (OAuth + MCP/TOON for external AI).
 
 **Base URL (local):** `http://localhost:3000`
 
@@ -46,7 +44,82 @@ error[1]{message}:
 
 ---
 
-## Agent endpoints
+## Webapp API (session auth)
+
+These routes serve the browser shop UI. They are **not** Lite-Toon bridge endpoints — implement similar routes in your own app calling the same capabilities.
+
+### `GET /api/products`
+
+Public product catalog.
+
+**Auth:** None
+
+#### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "p1", "name": "Nike Shoes", "price": 120 },
+    { "id": "p2", "name": "Adidas T-Shirt", "price": 35 },
+    { "id": "p3", "name": "Puma Socks", "price": 15 }
+  ]
+}
+```
+
+### `GET /api/cart`
+
+Returns the current user's cart.
+
+**Auth:** Session cookie optional. Returns empty cart when logged out.
+
+#### Response
+
+```json
+{
+  "cart": [{ "productId": "p1", "quantity": 2, "name": "Nike Shoes", "price": 120, "subtotal": 240 }],
+  "cartTotal": 240,
+  "cartItemCount": 2
+}
+```
+
+### `POST /api/cart`
+
+Add a product to the cart.
+
+**Auth:** Session required (401 if not signed in)
+
+#### Request
+
+```json
+{ "productId": "p1", "quantity": 1 }
+```
+
+#### Response
+
+Same shape as `GET /api/cart`.
+
+### `DELETE /api/cart`
+
+Remove one line (`?productId=p1`) or clear the entire cart (no query).
+
+**Auth:** Session required (401 if not signed in)
+
+### `GET /api/me`
+
+Returns the current session user.
+
+**Auth:** Session required (401 if not signed in)
+
+#### Response
+
+```json
+{ "authenticated": true, "userId": "user_abc", "username": "alice" }
+```
+
+---
+
+## Bridge API — Agent endpoints
 
 ### `POST /api/agent`
 
@@ -293,11 +366,11 @@ Also accepts `application/x-www-form-urlencoded`.
 
 ---
 
-## MCP endpoints
+## Bridge API — MCP endpoints
 
-### `GET` + `POST /api/mcp` (Streamable HTTP — primary)
+### `GET` + `POST /api/mcp` (Streamable HTTP)
 
-JSON-RPC 2.0 handler for Claude Chat and modern MCP clients. Supports the same methods as `/api/mcp/message`.
+JSON-RPC 2.0 handler for Claude Chat and modern MCP clients.
 
 **Auth:** Required for scoped `tools/call` (e.g. `addToCart`); `getProducts` works without a token in the demo.
 
@@ -319,51 +392,6 @@ Content-Type: application/json
 }
 ```
 
-### OAuth discovery (MCP)
-
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/.well-known/oauth-protected-resource` | Protected resource metadata (PRM) |
-| `GET` | `/.well-known/oauth-authorization-server` | Authorization server metadata (ASM) |
-| `POST` | `/api/oauth/register` | Dynamic client registration (DCR) |
-
-Unauthenticated `tools/call` for protected capabilities returns **HTTP 401** with a `WWW-Authenticate` header pointing at the PRM URL.
-
-### `GET /api/mcp/sse` (legacy)
-
-Opens an SSE stream. Sends `endpoint` event with the message URL.
-
-**Auth:** None
-
-See [MCP Integration](../concepts/mcp.md) for full protocol details.
-
-### `POST /api/mcp/message` (legacy)
-
-JSON-RPC 2.0 handler for MCP.
-
-**Auth:** Required for `tools/call`; optional for `initialize`, `ping`, `tools/list`
-
-#### Initialize
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": 1,
-  "method": "initialize",
-  "params": {
-    "protocolVersion": "2024-11-05",
-    "capabilities": {},
-    "clientInfo": { "name": "test", "version": "1.0.0" }
-  }
-}
-```
-
-#### Tools list
-
-```json
-{ "jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {} }
-```
-
 #### Tools call
 
 ```json
@@ -378,66 +406,17 @@ JSON-RPC 2.0 handler for MCP.
 }
 ```
 
----
+### OAuth discovery (MCP)
 
-## Demo UI endpoint
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/.well-known/oauth-protected-resource` | Protected resource metadata (PRM) |
+| `GET` | `/.well-known/oauth-authorization-server` | Authorization server metadata (ASM) |
+| `POST` | `/api/oauth/register` | Dynamic client registration (DCR) |
 
-### `GET /api/demo`
+Unauthenticated `tools/call` for protected capabilities returns **HTTP 401** with a `WWW-Authenticate` header pointing at the PRM URL.
 
-Returns initial shop state for the chat UI.
-
-**Auth:** None (uses internal demo token for cart)
-
-#### Response
-
-```json
-{
-  "products": [{ "id": "p1", "name": "Nike Shoes", "price": 120 }, ...],
-  "cart": [{ "productId": "p1", "quantity": 2, "name": "Nike Shoes", "price": 120, "subtotal": 240 }],
-  "cartTotal": 240,
-  "cartItemCount": 2
-}
-```
-
-### `POST /api/demo`
-
-Simulates an AI agent: parses natural language, routes through `/api/agent` adapter, returns TOON log.
-
-**Auth:** None (auto-issues demo OAuth token internally)
-
-#### Request
-
-```json
-{ "message": "Add 2 pairs of Nike shoes to my cart" }
-```
-
-#### Response
-
-```json
-{
-  "aiDecision": { "action": "addToCart", "params": { "productId": "p1", "quantity": 2 } },
-  "assistantMessage": "Done! I added 2x Nike Shoes to your cart. Current total: €240.00.",
-  "products": [...],
-  "cart": [...],
-  "cartTotal": 240,
-  "cartItemCount": 2,
-  "toonRequest": "request[1]{action, params}:\n  \"addToCart\", \"{\\\"productId\\\":\\\"p1\\\",\\\"quantity\\\":2}\"",
-  "toonResponse": "AddToCartResult[2]{productId, quantity}:\n  p1, 2\n  ..."
-}
-```
-
-#### Supported phrases
-
-| User message pattern | Action |
-|---|---|
-| `add` + `nike` | `addToCart` p1 |
-| `add` + `adidas` | `addToCart` p2 |
-| `add` + `puma` | `addToCart` p3 |
-| `product` / `catalog` | `getProducts` |
-| `clear cart` / `empty cart` / `clear` | `clearCart` |
-| `cart` (without `add`) | `getCart` |
-
-Quantity extracted from first number in message (default: 1).
+See [MCP Integration](../concepts/mcp.md) for full protocol details.
 
 ---
 

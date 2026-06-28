@@ -1,7 +1,5 @@
 # Packages Reference
 
-> **Cheat sheet:** [packages.md](../cheatsheets/packages.md)
-
 Per-package API surface for all `@lite-toon/*` workspace packages.
 
 ## Import guide
@@ -222,12 +220,14 @@ Next.js App Router route factories.
 import {
   createNextAgentHandler,
   createNextToolsHandler,
-  createMCPMessageHandler,
-  createMCPSseHandler,
+  createMCPStreamableHttpHandler,
   createOAuthAuthorizeHandler,
   createOAuthTokenHandler,
   createOAuthLoginHandler,
+  createOAuthRegisterHandler,
   createOpenApiSpecHandler,
+  createOAuthProtectedResourceHandler,
+  createOAuthAuthorizationServerMetadataHandler,
   SESSION_COOKIE,
 } from '@lite-toon/adapter-next';
 ```
@@ -238,12 +238,14 @@ import {
 |---|---|---|
 | `createNextAgentHandler(agent)` | `POST` | TOON/JSON agent endpoint |
 | `createNextToolsHandler(agent)` | `POST` | Dynamic tools route handler |
-| `createMCPMessageHandler(agent)` | `POST` | MCP JSON-RPC handler |
-| `createMCPSseHandler(agent)` | `GET` | MCP SSE stream |
+| `createMCPStreamableHttpHandler(agent)` | `GET`, `POST` | MCP Streamable HTTP handler |
 | `createOAuthAuthorizeHandler({ oauth })` | `GET` | OAuth authorize redirect |
 | `createOAuthTokenHandler({ oauth })` | `POST` | OAuth token exchange |
 | `createOAuthLoginHandler({ oauth })` | `POST` | Demo login + session cookie |
+| `createOAuthRegisterHandler({ oauth })` | `POST` | Dynamic client registration |
 | `createOpenApiSpecHandler(agent, { getExportOptions })` | `GET` | OpenAPI JSON document |
+| `createOAuthProtectedResourceHandler()` | `GET` | OAuth protected-resource metadata |
+| `createOAuthAuthorizationServerMetadataHandler()` | `GET` | OAuth authorization-server metadata |
 
 ### `SESSION_COOKIE`
 
@@ -292,12 +294,14 @@ Re-exports everything from `core`, `toon`, and `auth`.
 import {
   createNextAgentHandler,
   createNextToolsHandler,
-  createMCPMessageHandler,
-  createMCPSseHandler,
+  createMCPStreamableHttpHandler,
   createOAuthAuthorizeHandler,
   createOAuthTokenHandler,
   createOAuthLoginHandler,
+  createOAuthRegisterHandler,
   createOpenApiSpecHandler,
+  createOAuthProtectedResourceHandler,
+  createOAuthAuthorizationServerMetadataHandler,
 } from '@lite-toon/bridge/next';
 ```
 

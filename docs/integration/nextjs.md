@@ -1,7 +1,5 @@
 # Next.js Integration
 
-> **Cheat sheet:** [nextjs.md](../cheatsheets/nextjs.md)
-
 Step-by-step guide to wire Lite-Toon into a **Next.js App Router** application — the only officially supported framework adapter today.
 
 > Other framework adapters (Express, Hono, Edge) are on the roadmap.
@@ -195,24 +193,6 @@ export const GET = handler;
 export const POST = handler;
 ```
 
-`src/app/api/mcp/sse/route.ts` — legacy SSE:
-
-```typescript
-import { createMCPSseHandler } from '@lite-toon/bridge/next';
-import { agent } from '@/agent';
-
-export const GET = createMCPSseHandler(agent);
-```
-
-`src/app/api/mcp/message/route.ts` — legacy JSON-RPC:
-
-```typescript
-import { createMCPMessageHandler } from '@lite-toon/bridge/next';
-import { agent } from '@/agent';
-
-export const POST = createMCPMessageHandler(agent);
-```
-
 ### MCP OAuth discovery
 
 `src/app/.well-known/oauth-protected-resource/route.ts`:
@@ -290,8 +270,8 @@ npm run test:oauth -w @lite-toon/demo
 | `api/oauth/register/route.ts` | `createOAuthRegisterHandler` | POST |
 | `.well-known/oauth-protected-resource/route.ts` | `createOAuthProtectedResourceHandler` | GET |
 | `.well-known/oauth-authorization-server/route.ts` | `createOAuthAuthorizationServerMetadataHandler` | GET |
-| `api/mcp/sse/route.ts` | `createMCPSseHandler` | GET |
-| `api/mcp/message/route.ts` | `createMCPMessageHandler` | POST |
+
+Your webapp may also expose its own REST routes (e.g. `api/cart/route.ts`) that call `agent.registry.execute` with session auth — see [Demo App](../guide/demo-app.md).
 
 ## Deployment notes
 
@@ -301,7 +281,7 @@ OAuth redirect URIs and session cookies require HTTPS in production. Set `secure
 
 ### Base URL detection
 
-OpenAPI and MCP SSE build URLs from request headers:
+OpenAPI and MCP build URLs from request headers:
 
 - `host` — set by your reverse proxy
 - `x-forwarded-proto` — must be `https` behind TLS termination

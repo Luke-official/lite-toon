@@ -1,13 +1,11 @@
 export {
   createNextAgentHandler,
-  createMCPSseHandler,
   createNextToolsHandler,
   createOpenApiSpecHandler,
   createOAuthAuthorizeHandler,
   createOAuthTokenHandler,
   createOAuthLoginHandler,
   createOAuthRegisterHandler,
-  createMCPMessageHandler,
   createMCPStreamableHttpHandler,
   createOAuthProtectedResourceHandler,
   createOAuthAuthorizationServerMetadataHandler,

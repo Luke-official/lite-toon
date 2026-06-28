@@ -155,17 +155,6 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('Legacy message endpoint: tools/call getCart...');
-  const legacy = await rpc(`${BASE_URL}/api/mcp/message`, 4, 'tools/call', {
-    name: 'getCart',
-    arguments: {},
-  }, accessToken);
-  console.log(JSON.stringify(legacy.body, null, 2));
-
-  if (legacy.body?.error) {
-    process.exit(1);
-  }
-
   console.log('MCP test completed successfully.');
 }
 

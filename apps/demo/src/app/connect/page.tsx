@@ -13,7 +13,6 @@ export default function ConnectPage() {
   const tokenUrl = `${baseUrl}/api/oauth/token`;
   const registerUrl = `${baseUrl}/api/oauth/register`;
   const mcpUrl = `${baseUrl}/api/mcp`;
-  const mcpSseUrl = `${baseUrl}/api/mcp/sse`;
   const prmUrl = `${baseUrl}/.well-known/oauth-protected-resource`;
   const authMetadataUrl = `${baseUrl}/.well-known/oauth-authorization-server`;
 
@@ -62,10 +61,6 @@ export default function ConnectPage() {
             <div>
               <dt className="font-medium text-zinc-700">MCP (Streamable HTTP)</dt>
               <dd className="mt-1 break-all font-mono text-zinc-600">{mcpUrl}</dd>
-            </div>
-            <div>
-              <dt className="font-medium text-zinc-700">MCP (legacy SSE)</dt>
-              <dd className="mt-1 break-all font-mono text-zinc-600">{mcpSseUrl}</dd>
             </div>
             <div>
               <dt className="font-medium text-zinc-700">Protected resource metadata</dt>

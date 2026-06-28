@@ -1,5 +1,4 @@
 export { createNextAgentHandler } from './rest/agent';
-export { createMCPSseHandler } from './mcp/sse';
 export { createNextToolsHandler } from './rest/tools';
 export { createOpenApiSpecHandler } from './openapi';
 export type { OpenApiHandlerOptions } from './openapi';
@@ -9,7 +8,6 @@ export { createOAuthLoginHandler } from './oauth/login';
 export { createOAuthRegisterHandler } from './oauth/register';
 export { SESSION_COOKIE } from './oauth/constants';
 export type { OAuthAdapterOptions } from './oauth/types';
-export { createMCPMessageHandler } from './mcp/message';
 export { createMCPStreamableHttpHandler } from './mcp/http';
 export type { MCPHttpHandlerOptions } from './mcp/http';
 export {

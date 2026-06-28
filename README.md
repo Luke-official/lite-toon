@@ -108,13 +108,12 @@ flowchart TB
         Gemini["Gemini (soon)"]
     end
 
-    subgraph network ["Demo API Layer"]
+    subgraph network ["API Layer"]
+        Webapp["Webapp: products, cart, me"]
         OpenAPI["GET /api/openapi.json"]
         Tools["POST /api/tools/*"]
         OAuth["OAuth authorize + token"]
         MCPhttp["GET+POST /api/mcp"]
-        MCPsse["GET /api/mcp/sse (legacy)"]
-        MCPmsg["POST /api/mcp/message (legacy)"]
         Agent["POST /api/agent"]
     end
 
@@ -139,8 +138,8 @@ flowchart TB
     Gemini -.-> Tools
     Tools --> Adapter
     MCPhttp --> Adapter
-    MCPmsg --> Adapter
     Agent --> Adapter
+    Webapp --> Cap
     Adapter --> Auth
     Adapter --> Core
     Core --> Toon
@@ -200,17 +199,13 @@ Open the demo:
 
 | URL | What |
 |---|---|
-| [localhost:3000](http://localhost:3000) | Interactive shop + TOON log panel |
-| [localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide — **Claude** connector only |
-| [localhost:3000/login](http://localhost:3000/login) | OAuth login for agent users |
+| [localhost:3000](http://localhost:3000) | LiteShop — browse catalog, sign in, add to cart |
+| [localhost:3000/connect](http://localhost:3000/connect) | Developer guide — **Claude** connector setup |
+| [localhost:3000/login](http://localhost:3000/login) | Session login (same username as Claude OAuth) |
 
 > Port already in use? `npm run kill-ports` frees 3000, 3001, and 3002.
 
-Try in the chat UI:
-
-> *Add 2 pairs of Nike shoes to my cart*
-
-Watch the **System Log** panel light up with raw TOON payloads in real time.
+Sign in, click **Add to cart** on a product, or connect Claude via `/connect` and ask it to add items — both update the same cart.
 
 ### Run tests
 
@@ -244,7 +239,6 @@ Full documentation lives in [`docs/`](docs/README.md):
 | [Demo App](docs/guide/demo-app.md) | Reference app walkthrough |
 | [Connect Agents](docs/integration/connect-agents.md) | Claude setup only |
 | [Capability Flows](docs/concepts/capability-flows.md) | Per-capability sequence diagrams |
-| [Cheat Sheets](docs/cheatsheets/README.md) | Printable one-page quick refs |
 
 ---
 
@@ -324,10 +318,6 @@ import { createMCPStreamableHttpHandler } from '@lite-toon/bridge/next';
 const handler = createMCPStreamableHttpHandler(agent);
 export const GET = handler;
 export const POST = handler;
-
-// app/api/mcp/message/route.ts  — Claude MCP (legacy JSON-RPC)
-import { createMCPMessageHandler } from '@lite-toon/bridge/next';
-export const POST = createMCPMessageHandler(agent);
 ```
 
 ### 3. Auto-export schemas (one registry, multiple formats)
@@ -361,11 +351,21 @@ GetProductsResult[3]{id, name, price}:
 
 ### Endpoints (demo app)
 
+**Webapp** (session cookie) — humans in the browser:
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/api/products` | — | Product catalog |
+| `GET` | `/api/cart` | Session | Cart state |
+| `POST` | `/api/cart` | Session | Add to cart |
+| `DELETE` | `/api/cart` | Session | Remove line or clear cart |
+| `GET` | `/api/me` | Session | Current user |
+
+**Lite-Toon bridge** (OAuth Bearer) — external AI assistants:
+
 | Method | Path | Auth | Format | Consumer |
 |---|---|---|---|---|
-| `GET`+`POST` | `/api/mcp` | OAuth Bearer | JSON-RPC (Streamable HTTP) | **Claude** (primary) |
-| `POST` | `/api/mcp/message` | OAuth Bearer | JSON-RPC | Claude (legacy) |
-| `GET` | `/api/mcp/sse` | — | SSE | Claude (legacy) |
+| `GET`+`POST` | `/api/mcp` | OAuth Bearer | JSON-RPC (Streamable HTTP) | **Claude** |
 | `POST` | `/api/tools/{name}` | OAuth Bearer | JSON | ❌ Not supported (ChatGPT/Gemini — coming soon) |
 | `GET` | `/api/openapi.json` | — | OpenAPI 3.1 | ❌ Not supported (ChatGPT/Gemini — coming soon) |
 | `GET` | `/api/oauth/authorize` | Session | redirect | OAuth flow |
@@ -374,7 +374,6 @@ GetProductsResult[3]{id, name, price}:
 | `GET` | `/.well-known/oauth-protected-resource` | — | JSON | MCP OAuth discovery |
 | `GET` | `/.well-known/oauth-authorization-server` | — | JSON | OAuth server metadata |
 | `POST` | `/api/agent` | Optional | TOON / JSON | Direct integrations |
-| `POST` | `/api/demo` | Demo token | JSON + TOON log | Interactive UI |
 
 ### Headers
 
@@ -415,17 +414,16 @@ GetProductsResult[3]{id, name, price}:
 | **Auth store** | In-memory (`InMemoryAuthStore`) | Redis, database, or managed IdP session store |
 | **Session cookie** | `httpOnly` + `sameSite: lax`, no `secure` flag | Set `secure: true` behind HTTPS |
 | **`POST /api/agent`** | Anonymous access allowed; only `getProducts` works without a user | Require Bearer tokens or API keys for all sensitive capabilities |
-| **`POST /api/demo`** | Auto-issues OAuth tokens for the interactive UI | Remove or protect behind auth in production |
 | **Rate limiting** | In-memory, per process | Shared store (e.g. Redis) across instances |
 
 ### Endpoint auth summary
 
 | Path | Production guidance |
 |---|---|
-| `/api/mcp`, `/api/mcp/message`, `/api/tools/*` | Always require OAuth Bearer + scopes for protected capabilities |
+| `/api/mcp`, `/api/tools/*` | Always require OAuth Bearer + scopes for protected capabilities |
 | `/api/oauth/*` | Replace in-memory store; validate redirect URIs for your domain |
 | `/api/agent` | Treat as internal unless you add `requireAuth` at the gatekeeper |
-| `/api/demo` | Disable or restrict to non-production environments |
+| `/api/cart`, `/api/me` | Protect with real session auth in production |
 
 ### Before you fork or deploy
 
@@ -456,7 +454,7 @@ sequenceDiagram
     Claude-->>User: Natural language reply
 ```
 
-The built-in chat UI (`/api/demo`) simulates the AI decision layer locally and pipes requests through the same adapter — with a live TOON log so you can see the wire format in action.
+The demo shop UI uses normal REST (`/api/cart`) for humans. Claude uses the Lite-Toon bridge (`/api/mcp`). Both call the same capabilities — sign in with the same username to share a cart.
 
 ---
 
@@ -464,16 +462,15 @@ The built-in chat UI (`/api/demo`) simulates the AI decision layer locally and p
 
 - [x] Framework-agnostic core (`@lite-toon/core`, `@lite-toon/toon`)
 - [x] Monorepo with `@lite-toon/*` workspaces + Turbo
-- [x] Next.js App Router adapters (agent, MCP Streamable HTTP, legacy SSE/message, OAuth)
+- [x] Next.js App Router adapters (agent, MCP Streamable HTTP, OAuth)
 - [x] OAuth 2.0 user auth with per-user carts + MCP OAuth discovery
-- [x] Claude via MCP Streamable HTTP (`/api/mcp`) + legacy JSON-RPC
-- [x] Interactive demo + `/connect` merchant guide
+- [x] Claude via MCP Streamable HTTP (`/api/mcp`)
+- [x] Demo shop UI + `/connect` developer guide
 - [ ] ChatGPT Custom GPT / Actions (OpenAPI + `/api/tools/*`)
 - [ ] Gemini Extensions / OpenAPI integration
 - [ ] Publish `@lite-toon/bridge` to npm
 - [ ] Express / Hono / Edge adapters
 - [ ] Redis-backed auth store + rate limiter
-- [ ] Real LLM in `/api/demo` (replace keyword parser)
 
 ---
 

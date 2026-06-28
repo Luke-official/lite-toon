@@ -1,7 +1,5 @@
 # Architecture
 
-> **Cheat sheet:** [architecture.md](../cheatsheets/architecture.md)
-
 Deep dive into Lite-Toon's monorepo structure, dependency rules, runtime layers, and data flows.
 
 > **Current scope:** Next.js App Router adapter + Claude MCP. ChatGPT and Gemini are **not supported yet** — coming soon.
@@ -13,6 +11,17 @@ Deep dive into Lite-Toon's monorepo structure, dependency rules, runtime layers,
 3. **One registry, many exports** — register capabilities once; MCP export is supported today; OpenAPI/Gemini exports are for future platforms (not supported yet)
 4. **Inward dependencies only** — adapters → auth/core/toon; core never imports adapters
 5. **TOON by default** — `/api/agent` uses TOON unless JSON is requested; MCP uses JSON-RPC
+
+## Two channels
+
+The demo app separates **human web traffic** from **agent bridge traffic**:
+
+| Channel | Routes | Auth | Purpose |
+|---|---|---|---|
+| **Webapp** | `/api/products`, `/api/cart`, `/api/me` | Session cookie | Shop UI — humans browse and manage cart |
+| **Bridge** | `/api/agent`, `/api/tools/*`, `/api/mcp`, OAuth | Bearer token (agents) or optional (agent) | AI agents discover and call capabilities |
+
+Both channels call the same `CapabilityRegistry.execute()` — the webapp routes are thin wrappers that resolve the session cookie to `userId` and invoke capabilities directly.
 
 ## High-level diagram
 
@@ -33,10 +42,8 @@ flowchart TB
         Tools["POST /api/tools/*"]
         OAuth["OAuth authorize + token"]
         MCPhttp["GET+POST /api/mcp"]
-        MCPsse["GET /api/mcp/sse (legacy)"]
-        MCPmsg["POST /api/mcp/message (legacy)"]
         Agent["POST /api/agent"]
-        Demo["POST /api/demo"]
+        Webapp["GET/POST /api/cart, /api/products"]
     end
 
     subgraph packages ["@lite-toon/* Packages"]
@@ -52,6 +59,7 @@ flowchart TB
     end
 
     U --> agents
+    U --> Webapp
     Claude --> MCPhttp
     Claude --> OAuth
     GPT -.-> OpenAPI
@@ -60,9 +68,8 @@ flowchart TB
     Gemini -.-> Tools
     Tools --> Adapter
     MCPhttp --> Adapter
-    MCPmsg --> Adapter
     Agent --> Adapter
-    Demo --> Adapter
+    Webapp --> Core
     Adapter --> Auth
     Adapter --> Core
     Core --> Toon
@@ -106,11 +113,9 @@ lite-toon/
 │   │
 │   ├── adapter-next/         @lite-toon/adapter-next
 │   │   └── src/
-│   │       ├── rest.ts       createNextAgentHandler
-│   │       ├── tools.ts      createNextToolsHandler
-│   │       ├── mcp-message.ts createMCPMessageHandler
-│   │       ├── sse.ts        createMCPSseHandler
-│   │       ├── oauth.ts      OAuth route factories
+│   │       ├── rest/         createNextAgentHandler, createNextToolsHandler
+│   │       ├── mcp/          createMCPStreamableHttpHandler, JSON-RPC core
+│   │       ├── oauth/        OAuth route factories
 │   │       ├── openapi.ts    createOpenApiSpecHandler
 │   │       └── index.ts
 │   │
@@ -127,21 +132,22 @@ lite-toon/
             ├── lib/auth.ts           OAuthServer config
             ├── demo/capabilities.ts  E-commerce business logic
             └── app/
-                ├── page.tsx          Chat UI + TOON log
+                ├── page.tsx          Shop UI (product grid + cart)
                 ├── connect/page.tsx  Merchant setup guide
                 ├── login/page.tsx    OAuth login form
                 └── api/              Thin route intercoms
                     ├── agent/route.ts
-                    ├── demo/route.ts
+                    ├── cart/route.ts
+                    ├── products/route.ts
+                    ├── me/route.ts
                     ├── openapi.json/route.ts
                     ├── tools/[name]/route.ts
                     ├── oauth/
                     │   ├── authorize/route.ts
                     │   ├── token/route.ts
-                    │   └── login/route.ts
-                    └── mcp/
-                        ├── sse/route.ts
-                        └── message/route.ts
+                    │   ├── login/route.ts
+                    │   └── register/route.ts
+                    └── mcp/route.ts
 ```
 
 ## Package dependency graph
@@ -196,24 +202,25 @@ Serializes/deserializes the TOON wire format. Used by `createNextAgentHandler` f
 
 ### Layer 3 — Transport (`@lite-toon/adapter-next`)
 
-Route factories that translate HTTP/MCP/SSE into core calls:
+Route factories that translate HTTP/MCP into core calls:
 
 | Factory | Protocol |
 |---|---|
 | `createNextAgentHandler` | TOON/JSON REST |
 | `createNextToolsHandler` | JSON REST per capability |
-| `createMCPMessageHandler` | JSON-RPC 2.0 |
-| `createMCPSseHandler` | Server-Sent Events |
+| `createMCPStreamableHttpHandler` | MCP Streamable HTTP (JSON-RPC 2.0) |
 | `createOAuthAuthorizeHandler` | OAuth 2.0 redirect |
 | `createOAuthTokenHandler` | OAuth token exchange |
 | `createOAuthLoginHandler` | Demo session login |
+| `createOAuthRegisterHandler` | Dynamic client registration |
 | `createOpenApiSpecHandler` | OpenAPI 3.1 JSON |
 
 ### Layer 4 — Application (`apps/demo`)
 
 - **Capabilities** — business logic in `demo/capabilities.ts`
-- **Routes** — thin delegates to adapter factories
-- **UI** — chat simulator with TOON System Log
+- **Bridge routes** — thin delegates to adapter factories (`/api/agent`, `/api/tools/*`, `/api/mcp`, OAuth)
+- **Webapp routes** — session-cookie routes that call `agent.registry.execute()` directly (`/api/cart`, `/api/products`, `/api/me`)
+- **UI** — e-commerce shop with product grid and cart sidebar
 
 ## Request lifecycle (tools endpoint)
 

@@ -1,10 +1,8 @@
 # Capability Flows
 
-> **Cheat sheet:** [capability-flows.md](../cheatsheets/capability-flows.md)
+Per-capability sequence diagrams for every demo tool across transports. **Supported today:** Claude MCP, TOON agent (`/api/agent`), shop UI (webapp channel). ChatGPT/Gemini (`/api/tools`) diagrams are included for reference — those platforms are **not supported yet**.
 
-Per-capability sequence diagrams for every demo tool across transports. **Supported today:** Claude MCP, TOON agent (`/api/agent`), demo UI (`/api/demo`). ChatGPT/Gemini (`/api/tools`) diagrams are included for reference — those platforms are **not supported yet**.
-
-See also: [Capabilities guide](./capabilities.md) · [Capabilities cheat sheet](../cheatsheets/capabilities.md)
+See also: [Capabilities guide](./capabilities.md)
 
 ## Quick reference
 
@@ -52,19 +50,19 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Claude as MCP Client
-    participant Msg as /api/mcp/message
+    participant MCP as /api/mcp
     participant GK as SecurityGatekeeper
     participant Reg as CapabilityRegistry
     participant Cap as getProducts.execute
 
-    Claude->>Msg: JSON-RPC tools/call {name: getProducts}
-    Msg->>GK: checkAccess + cart:read scope
-    GK-->>Msg: ResolvedAccess
-    Msg->>Reg: execute("getProducts", {}, context)
+    Claude->>MCP: JSON-RPC tools/call {name: getProducts}
+    MCP->>GK: checkAccess + cart:read scope
+    GK-->>MCP: ResolvedAccess
+    MCP->>Reg: execute("getProducts", {}, context)
     Reg->>Cap: execute
     Cap-->>Reg: {success, data: Product[]}
-    Reg-->>Msg: AgentResponse
-    Msg-->>Claude: JSON-RPC result (data as text JSON)
+    Reg-->>MCP: AgentResponse
+    MCP-->>Claude: JSON-RPC result (data as text JSON)
 ```
 
 ### Via TOON agent (`POST /api/agent`)
@@ -190,23 +188,22 @@ sequenceDiagram
     Handler-->>Client: GetCartResult TOON
 ```
 
-### Via demo UI
+### Via shop UI (webapp channel)
 
 ```mermaid
 sequenceDiagram
-    participant UI as Chat "Show my cart"
-    participant Demo as /api/demo
-    participant Adapter as createNextAgentHandler
+    participant UI as Shop UI
+    participant Cart as /api/cart
+    participant Reg as CapabilityRegistry
     participant Cap as getCart.execute
 
-    UI->>Demo: POST {message: "show my cart"}
-    Demo->>Demo: keyword → action=getCart
-    Demo->>Adapter: TOON request + demo Bearer token
-    Adapter->>Cap: execute via registry
-    Cap-->>Adapter: cart data
-    Adapter-->>Demo: TOON response
-    Demo->>Demo: buildAssistantMessage + enrichCart
-    Demo-->>UI: JSON + toonRequest + toonResponse
+    UI->>Cart: GET + session cookie
+    Cart->>Cart: resolveSessionUserId → userId
+    Cart->>Reg: execute("getCart", {}, context)
+    Reg->>Cap: execute
+    Cap-->>Reg: cart data
+    Reg-->>Cart: AgentResponse
+    Cart-->>UI: JSON {cart, cartTotal, cartItemCount}
 ```
 
 ### Business logic (internal)
@@ -300,14 +297,14 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant Claude
-    participant Msg as /api/mcp/message
+    participant MCP as /api/mcp
     participant Cap as addToCart.execute
 
-    Claude->>Msg: tools/call {name:addToCart, arguments:{productId:p2, quantity:1}}
-    Msg->>Msg: auth + cart:write check
-    Msg->>Cap: execute via registry
-    Cap-->>Msg: {success, data}
-    Msg-->>Claude: MCP text content block (JSON string)
+    Claude->>MCP: tools/call {name:addToCart, arguments:{productId:p2, quantity:1}}
+    MCP->>MCP: auth + cart:write check
+    MCP->>Cap: execute via registry
+    Cap-->>MCP: {success, data}
+    MCP-->>Claude: MCP text content block (JSON string)
 ```
 
 ### Business logic (internal)
@@ -469,5 +466,4 @@ flowchart TB
 
 - [Capabilities guide](./capabilities.md)
 - [API Reference](../reference/api.md)
-- [Capabilities cheat sheet](../cheatsheets/capabilities.md)
 - [Demo capabilities source](../../apps/demo/src/demo/capabilities.ts)

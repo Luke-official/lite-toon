@@ -14,7 +14,6 @@ Complete documentation for the Lite-Toon SDK — a framework-agnostic TypeScript
 | Add a new tool to my app | [Capabilities](./concepts/capabilities.md) |
 | Integrate into a Next.js app | [Next.js Integration](./integration/nextjs.md) |
 | Look up an HTTP endpoint | [API Reference](./reference/api.md) |
-| Print a one-page summary | [Cheat Sheets](./cheatsheets/README.md) |
 
 ## Documentation map
 
@@ -34,7 +33,7 @@ Complete documentation for the Lite-Toon SDK — a framework-agnostic TypeScript
 | [Capabilities](./concepts/capabilities.md) | Defining, registering, and scoping agent tools |
 | [Capability Flows](./concepts/capability-flows.md) | Per-capability sequence diagrams (all transports) |
 | [OAuth & Authentication](./concepts/oauth.md) | PKCE flow, sessions, tokens, scopes |
-| [MCP Integration](./concepts/mcp.md) | Claude / Model Context Protocol (Streamable HTTP + legacy SSE) |
+| [MCP Integration](./concepts/mcp.md) | Claude / Model Context Protocol (Streamable HTTP) |
 | [Security](./security/overview.md) | Gatekeeper, rate limits, production checklist |
 
 ### Integration & reference
@@ -46,12 +45,6 @@ Complete documentation for the Lite-Toon SDK — a framework-agnostic TypeScript
 | [API Reference](./reference/api.md) | Every endpoint, header, status code, example |
 | [Packages](./reference/packages.md) | `@lite-toon/*` package-by-package API surface |
 | [Demo App](./guide/demo-app.md) | Reference app walkthrough (`apps/demo`) |
-
-### Cheat sheets (printable)
-
-| Document | Description |
-|---|---|
-| [Cheat Sheets Index](./cheatsheets/README.md) | One-page quick refs for every topic |
 
 ## Folder structure
 
@@ -76,17 +69,8 @@ docs/
 ├── reference/
 │   ├── api.md                HTTP endpoints
 │   └── packages.md           SDK packages
-├── security/
-│   └── overview.md           Production hardening
-└── cheatsheets/              One-page printable quick refs
-    ├── README.md
-    ├── getting-started.md
-    ├── architecture.md
-    ├── capabilities.md
-    ├── capability-flows.md
-    ├── toon.md · oauth.md · mcp.md · security.md
-    ├── nextjs.md · connect-agents.md
-    └── api.md · packages.md · demo-app.md
+└── security/
+    └── overview.md           Production hardening
 ```
 
 ## Mental model
@@ -105,7 +89,16 @@ Lite-Toon has three concentric rings:
 └─────────────────────────────────────────┘
 ```
 
-You write the inner ring. The SDK generates schemas and route handlers for the outer rings.
+You write the inner ring (capabilities + your own webapp API). The SDK generates schemas and route handlers for the **bridge** layer (MCP, TOON agent, OAuth).
+
+### Two channels in the demo
+
+| Channel | Who | Auth | Example routes |
+|---|---|---|---|
+| **Webapp** | Humans in the browser | Session cookie | `GET /api/products`, `GET/POST/DELETE /api/cart` |
+| **Lite-Toon bridge** | External AI assistants | OAuth Bearer | `POST /api/mcp`, `POST /api/agent` |
+
+Both call the same capabilities. The webapp never routes UI actions through TOON or MCP.
 
 ## Monorepo at a glance
 

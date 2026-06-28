@@ -1,7 +1,5 @@
 # Study Guide
 
-> **Cheat sheet:** [study-guide.md](../cheatsheets/study-guide.md)
-
 A structured path to understand every aspect of the Lite-Toon codebase — from TOON serialization to OAuth flows and MCP JSON-RPC.
 
 ## What you are learning
@@ -37,15 +35,16 @@ Complete [Getting Started](./getting-started.md) first: clone, build, run demo, 
 
 ### Goals
 
-- See TOON in the UI System Log
-- Understand the demo's four capabilities
-- Map URLs to agent platforms
+- Use the shop UI to add products and manage the cart
+- Understand the demo's capabilities
+- Map URLs to agent platforms and the two channels (webapp vs bridge)
 
 ### Activities
 
-1. Open `http://localhost:3000` and add Nike shoes to cart
+1. Open `http://localhost:3000` — sign in and add Nike shoes to cart via the product grid
 2. Open `http://localhost:3000/connect` — note OpenAPI and OAuth URLs
 3. Open `http://localhost:3000/api/openapi.json` — see auto-generated paths
+4. Skim `apps/demo/src/app/api/cart/route.ts` — webapp channel calling capabilities via session cookie
 
 ### Files to skim
 
@@ -53,17 +52,18 @@ Complete [Getting Started](./getting-started.md) first: clone, build, run demo, 
 |---|---|
 | `apps/demo/src/demo/capabilities.ts` | Mock e-commerce business logic |
 | `apps/demo/src/agent.ts` | Wires OAuth + capabilities into `UniversalAgent` |
-| `apps/demo/src/app/api/agent/route.ts` | Thin route (3 lines) |
+| `apps/demo/src/app/api/cart/route.ts` | Webapp channel — session → registry.execute() |
+| `apps/demo/src/app/api/agent/route.ts` | Bridge channel — thin route (3 lines) |
 
 ### Checkpoint
 
 You should be able to answer:
 
-- What are the four demo capabilities?
-- Which endpoint uses TOON vs JSON?
+- What are the demo capabilities?
+- Which endpoints use the webapp channel vs the bridge channel?
 - What is the demo OAuth client ID?
 
-**Answers:** `getProducts`, `getCart`, `addToCart`, `clearCart` · `/api/agent` = TOON, `/api/tools/*` and MCP = JSON · `lite-toon-demo`
+**Answers:** `getProducts`, `getCart`, `addToCart`, `clearCart` (and `removeFromCart`) · Webapp: `/api/cart`, `/api/products`, `/api/me` (session cookie). Bridge: `/api/agent` = TOON, `/api/tools/*` and `/api/mcp` = JSON · `lite-toon-demo`
 
 ---
 
@@ -95,7 +95,7 @@ Note: params are often JSON-encoded strings inside TOON rows when sent via `/api
 
 ### Trace in code
 
-`packages/adapter-next/src/rest.ts`:
+`packages/adapter-next/src/rest/agent.ts`:
 
 1. `parseToon(rawBody)` → extract `action` and `params`
 2. `agent.registry.execute(action, params, context)`
@@ -211,12 +211,12 @@ In `capabilities.ts`, `cartsByUser` is a `Map<string, CartItem[]>`. The `userId`
 ### Read
 
 - [API Reference](../reference/api.md)
-- `packages/adapter-next/src/rest.ts` — `/api/agent`
-- `packages/adapter-next/src/tools.ts` — `/api/tools/{name}`
-- `packages/adapter-next/src/mcp-message.ts` — MCP JSON-RPC
-- `packages/adapter-next/src/sse.ts` — MCP SSE
-- `packages/adapter-next/src/oauth.ts` — OAuth routes
+- `packages/adapter-next/src/rest/agent.ts` — `/api/agent`
+- `packages/adapter-next/src/rest/tools.ts` — `/api/tools/{name}`
+- `packages/adapter-next/src/mcp/http.ts` — MCP Streamable HTTP
+- `packages/adapter-next/src/oauth/` — OAuth routes
 - `packages/adapter-next/src/openapi.ts` — OpenAPI export
+- `apps/demo/src/app/api/cart/route.ts` — webapp channel
 
 ### Endpoint matrix
 
@@ -224,29 +224,29 @@ In `capabilities.ts`, `cartsByUser` is a `Map<string, CartItem[]>`. The `userId`
 |---|---|---|---|
 | `POST /api/agent` | Optional Bearer | TOON or JSON | Direct integrations |
 | `POST /api/tools/{name}` | Required Bearer + scopes | JSON | Not supported yet (ChatGPT/Gemini) |
-| `POST /api/mcp/message` | Required Bearer + scopes | JSON-RPC | Claude |
-| `GET /api/mcp/sse` | None | SSE | Claude (discovery) |
+| `GET+POST /api/mcp` | Bearer + scopes (tools/call) | JSON-RPC | Claude |
 | `GET /api/openapi.json` | None | OpenAPI 3.1 | GPT Actions import |
 | `GET /api/oauth/authorize` | Session cookie | redirect | OAuth |
 | `POST /api/oauth/token` | None | JSON | OAuth PKCE |
-| `POST /api/demo` | Auto demo token | JSON + TOON log | Interactive UI |
+| `GET/POST/DELETE /api/cart` | Session cookie | JSON | Shop UI (webapp channel) |
+| `GET /api/products` | None | JSON | Shop UI |
+| `GET /api/me` | Session cookie | JSON | Shop UI |
 
 ### Exercise
 
-Read `apps/demo/src/app/api/demo/route.ts` — the `/api/demo` route simulates an AI:
+Read `apps/demo/src/app/api/cart/route.ts` — the webapp channel:
 
-1. Keyword-matches user message
-2. Builds TOON request via `formatToon()`
-3. Calls `createNextAgentHandler` internally
-4. Returns assistant message + raw TOON for the System Log
+1. Resolves `userId` from session cookie via `resolveSessionUserId()`
+2. Calls `agent.registry.execute()` directly (no adapter factory)
+3. Returns enriched cart JSON for the shop UI
 
-This is the best file for understanding the full pipeline without external agents.
+Compare with `apps/demo/src/app/api/agent/route.ts` — the bridge channel delegates to `createNextAgentHandler`.
 
 ### Checkpoint
 
 - Why does ChatGPT use JSON, not TOON?
 - What MCP methods are supported?
-- How does Claude discover the message URL?
+- How does the webapp channel differ from the bridge channel?
 
 ---
 
@@ -300,7 +300,6 @@ Compare these three outputs for `addToCart`:
 | Store | In-memory | Redis / database |
 | Rate limit | Per-process memory | Shared store |
 | `/api/agent` | Anonymous allowed | Require auth for sensitive caps |
-| `/api/demo` | Auto-issues tokens | Remove or protect |
 
 ### Checkpoint
 
@@ -358,22 +357,22 @@ sequenceDiagram
     GPT-->>User: natural language reply
 ```
 
-### Demo UI → TOON round-trip
+### Shop UI → cart update (webapp channel)
 
 ```mermaid
 sequenceDiagram
-    participant UI as Chat UI
-    participant Demo as /api/demo
-    participant Adapter as createNextAgentHandler
+    participant UI as Shop UI
+    participant Cart as /api/cart
     participant Reg as CapabilityRegistry
+    participant Cap as addToCart.execute
 
-    UI->>Demo: POST {message}
-    Demo->>Demo: keyword → action/params
-    Demo->>Adapter: TOON request + Bearer
-    Adapter->>Reg: execute(action, params, context)
-    Reg-->>Adapter: AgentResponse
-    Adapter-->>Demo: TOON response
-    Demo-->>UI: assistantMessage + toonRequest + toonResponse
+    UI->>Cart: POST {productId, quantity} + session cookie
+    Cart->>Cart: resolveSessionUserId → userId
+    Cart->>Reg: execute("addToCart", params, context)
+    Reg->>Cap: execute
+    Cap-->>Reg: AgentResponse
+    Reg-->>Cart: updated cart
+    Cart-->>UI: JSON {cart, cartTotal, cartItemCount}
 ```
 
 ---

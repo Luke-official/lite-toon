@@ -2,7 +2,7 @@
 
 Capabilities are the fundamental unit of Lite-Toon. Each capability is a named, schema-described function that AI agents can discover and invoke.
 
-> **Sequence diagrams:** [Capability Flows](./capability-flows.md) · **Cheat sheet:** [capabilities cheat sheet](../cheatsheets/capabilities.md)
+> **Sequence diagrams:** [Capability Flows](./capability-flows.md)
 
 ## Anatomy of a capability
 

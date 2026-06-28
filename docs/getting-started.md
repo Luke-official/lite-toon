@@ -1,7 +1,5 @@
 # Getting Started
 
-> **Cheat sheet:** [getting-started.md](./cheatsheets/getting-started.md)
-
 This guide gets the Lite-Toon demo running locally and verifies each transport layer works.
 
 > **Project status:** Lite-Toon is in early development. Fully tested and supported today: **Next.js App Router**, **Claude MCP** (`/api/mcp`), and direct **TOON** access (`/api/agent`). **ChatGPT and Gemini are not supported yet** — coming soon.
@@ -45,24 +43,16 @@ All variables are optional for local development.
 
 | URL | What you'll see |
 |---|---|
-| [http://localhost:3000](http://localhost:3000) | Interactive shop + chat + TOON System Log |
-| [http://localhost:3000/connect](http://localhost:3000/connect) | Merchant setup guide — **Claude** only |
-| [http://localhost:3000/login](http://localhost:3000/login) | OAuth username login for agent users |
+| [http://localhost:3000](http://localhost:3000) | LiteShop — browse catalog, sign in, add to cart |
+| [http://localhost:3000/connect](http://localhost:3000/connect) | Developer guide to wire **Claude** to the shop |
+| [http://localhost:3000/login](http://localhost:3000/login) | Session login (same username as OAuth for Claude) |
 
-### Try the chat UI
+### Try the shop UI
 
-Type in the chat:
-
-> Add 2 pairs of Nike shoes to my cart
-
-Watch the **System Log** panel — it shows raw TOON request and response payloads in real time.
-
-Other phrases the demo understands:
-
-- `Show my cart`
-- `Show products` / `catalog`
-- `Clear cart`
-- `Add 3 adidas` / `Add 1 puma`
+1. Open the homepage and browse the product catalog (no login required).
+2. Sign in at `/login` with any username (e.g. `alice`).
+3. Click **Add to cart** on a product — the cart sidebar updates immediately.
+4. Optional: connect Claude via `/connect` and ask it to add items — the same cart syncs when you refocus the browser tab.
 
 ## Verify with test scripts
 

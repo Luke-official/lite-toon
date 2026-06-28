@@ -1,14 +1,10 @@
 # MCP Integration
 
-> **Cheat sheet:** [mcp.md](../cheatsheets/mcp.md)
-
 Lite-Toon exposes a [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server so **Claude** and other MCP clients can discover and call your capabilities as tools.
 
 ## Transport
 
-MCP is available over two transports:
-
-### Streamable HTTP (recommended — Claude Chat)
+MCP uses **Streamable HTTP** (the MCP spec's recommended transport):
 
 | Method | Path | Role |
 |---|---|---|
@@ -25,20 +21,13 @@ export const GET = handler;
 export const POST = handler;
 ```
 
-### Legacy SSE + message (still supported)
-
-| Method | Path | Role |
-|---|---|---|
-| `GET` | `/api/mcp/sse` | SSE stream — sends `endpoint` event with message URL |
-| `POST` | `/api/mcp/message` | JSON-RPC 2.0 message handler |
-
 Authentication: Bearer access token (same OAuth flow as `/api/tools/*`). Claude Chat discovers OAuth automatically via:
 
 - `GET /.well-known/oauth-protected-resource`
 - `GET /.well-known/oauth-authorization-server`
 - `POST /api/oauth/register` (dynamic client registration)
 
-## Connection flow (Streamable HTTP)
+## Connection flow
 
 ```mermaid
 sequenceDiagram
@@ -55,34 +44,10 @@ sequenceDiagram
     MCP-->>Client: tool result
 ```
 
-## Connection flow (legacy SSE)
+### Initialize
 
 ```http
-GET /api/mcp/sse
-```
-
-Response headers:
-
-```
-Content-Type: text/event-stream
-Cache-Control: no-cache
-Connection: keep-alive
-```
-
-First event:
-
-```
-event: endpoint
-data: http://localhost:3000/api/mcp/message
-
-```
-
-The client uses this URL for all subsequent JSON-RPC messages.
-
-### 2. Initialize
-
-```http
-POST /api/mcp/message
+POST /api/mcp
 Authorization: Bearer <access_token>
 Content-Type: application/json
 
@@ -112,7 +77,7 @@ Response:
 }
 ```
 
-### 3. List tools
+### List tools
 
 ```json
 {
@@ -155,7 +120,7 @@ Response:
 
 Tools are auto-generated from `CapabilityRegistry.exportMcpTools()`.
 
-### 4. Call a tool
+### Call a tool
 
 ```json
 {
@@ -213,7 +178,7 @@ Unsupported methods return JSON-RPC error `-32601 Method not found`.
 
 ## Authentication on tools/call
 
-`createMCPMessageHandler` enforces:
+`createMCPStreamableHttpHandler` enforces:
 
 1. `Authorization: Bearer <token>` header present
 2. Token resolves to valid user via `OAuthServer`
@@ -237,34 +202,15 @@ MCP tool results return capability `data` as a **JSON string** inside `content[0
 
 TOON is **not** used on MCP endpoints.
 
-## SSE implementation details
-
-File: `packages/adapter-next/src/sse.ts`
-
-- Uses `TransformStream` for the response body
-- Sends `endpoint` event immediately on connect
-- Listens for `req.signal` abort to close writer (prevents leaks)
-- Builds absolute message URL from `host` + `x-forwarded-proto` headers
-
 ## Wiring in Next.js
 
 ```typescript
-// app/api/mcp/route.ts — Streamable HTTP (recommended)
+// app/api/mcp/route.ts
 import { createMCPStreamableHttpHandler } from '@lite-toon/bridge/next';
 import { agent } from '@/agent';
 const handler = createMCPStreamableHttpHandler(agent);
 export const GET = handler;
 export const POST = handler;
-
-// app/api/mcp/sse/route.ts — legacy
-import { createMCPSseHandler } from '@lite-toon/bridge/next';
-import { agent } from '@/agent';
-export const GET = createMCPSseHandler(agent);
-
-// app/api/mcp/message/route.ts — legacy
-import { createMCPMessageHandler } from '@lite-toon/bridge/next';
-import { agent } from '@/agent';
-export const POST = createMCPMessageHandler(agent);
 
 // app/.well-known/oauth-protected-resource/route.ts
 import { createOAuthProtectedResourceHandler } from '@lite-toon/bridge/next';
@@ -281,7 +227,7 @@ export const GET = createOAuthAuthorizationServerMetadataHandler();
 npm run test:mcp -w @lite-toon/demo
 ```
 
-Runs: OAuth discovery → Streamable HTTP `initialize` → `tools/list` → `tools/call` → legacy message endpoint smoke test.
+Runs: OAuth discovery → Streamable HTTP `initialize` → `tools/list` → `tools/call`.
 
 ## Claude Chat configuration
 
@@ -299,7 +245,7 @@ For local development with Claude, you need a public HTTPS tunnel (ngrok, Cloudf
 | Status | **Supported** (Claude) | **Not supported yet** (ChatGPT/Gemini) |
 | Protocol | JSON-RPC 2.0 | REST POST per tool |
 | Discovery | `tools/list` | `GET /api/openapi.json` |
-| Transport | Streamable HTTP (+ legacy SSE) | HTTP POST |
+| Transport | Streamable HTTP | HTTP POST |
 | Primary consumer | Claude | ChatGPT, Gemini |
 | Response format | MCP content blocks | `{ success, data }` JSON |
 | Auth | Bearer + scopes | Bearer + scopes |

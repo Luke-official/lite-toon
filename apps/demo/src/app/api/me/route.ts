@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SESSION_COOKIE } from '@lite-toon/bridge/next';
-import { oauthServer, authStore } from '@/lib/auth';
+import { authStore } from '@/lib/auth';
+import { resolveSessionUserId } from '@/lib/session';
 
 export async function GET(req: NextRequest) {
-  const sessionId = req.cookies.get(SESSION_COOKIE)?.value;
-  if (!sessionId) {
-    return NextResponse.json({ authenticated: false }, { status: 401 });
-  }
-
-  const userId = await oauthServer.resolveSession(sessionId);
+  const userId = await resolveSessionUserId(req);
   if (!userId) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
