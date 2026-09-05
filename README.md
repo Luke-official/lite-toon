@@ -48,7 +48,7 @@ Customer ← "Done! I added 2x Nike Shoes to your cart."
 |---|---|---|---|
 | ✅ **Supported** | **Claude** | MCP Streamable HTTP at `/api/mcp` + OAuth | MCP tool schemas + OAuth discovery |
 | ✅ **Supported** | **Next.js App Router** | Route factories in `@lite-toon/adapter-next` | Thin API route handlers |
-| 🔜 Not supported yet | **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
+| ✅ **Supported** | **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
 | 🔜 Not supported yet | **Gemini** | Extensions / Gems + OpenAPI | Gemini function declarations |
 | 🔜 Coming soon | **Express / Hono / Edge** | Framework adapters | Same core, different transport |
 
@@ -260,7 +260,28 @@ Full walkthrough: [`docs/integration/connect-agents.md`](docs/integration/connec
 
 Demo OAuth client ID: `lite-toon-demo` · Scopes: `cart:read cart:write`
 
-> **ChatGPT and Gemini are not supported yet.** They will be added in a future release.
+---
+
+## ✦ Connect ChatGPT
+
+**ChatGPT Custom GPT — 5-minute setup:**
+
+1. Run the demo: `npm run dev:clean`
+2. Expose HTTPS: `ngrok http 3000`
+3. In ChatGPT → **Explore GPTs → Create → Configure → Add actions**
+4. Import from URL: `https://<your-ngrok-host>/api/openapi.json`
+   - ChatGPT reads the OpenAPI 3.1 document and discovers all capabilities automatically
+5. Under **Authentication** → select **OAuth**, fill in:
+   - Authorization URL: `https://<your-ngrok-host>/api/oauth/authorize`
+   - Token URL: `https://<your-ngrok-host>/api/oauth/token`
+   - Client ID: `lite-toon-demo` · Client secret: *(leave blank)*
+   - Scope: `cart:read cart:write`
+6. Click **Save** — ChatGPT will test the connection
+7. Ask: *"What products are available?"* then *"Add 1 Puma Socks to my cart"*
+
+> **Note:** ChatGPT Custom GPT OAuth does not support dynamic client registration.
+> The client ID `lite-toon-demo` is pre-registered in the demo. For your own app,
+> set `OAUTH_CLIENT_ID` to your custom value in `.env.local`.
 
 ---
 
@@ -510,11 +531,14 @@ The demo shop UI uses normal REST (`/api/cart`) for humans. Claude uses the Lite
 - [x] OAuth 2.0 user auth with per-user carts + MCP OAuth discovery
 - [x] Claude via MCP Streamable HTTP (`/api/mcp`)
 - [x] Demo shop UI + `/connect` developer guide
-- [ ] ChatGPT Custom GPT / Actions (OpenAPI + `/api/tools/*`)
+- [x] ChatGPT Custom GPT / Actions (OpenAPI 3.1 + `/api/tools/*`)
+- [x] HMAC-SHA256 signed tokens (`tokenSecret` option)
+- [x] `RedisAuthStore` adapter (`@lite-toon/auth/redis`)
+- [x] Capability `riskLevel` field (`read` / `write` / `destructive`)
 - [ ] Gemini Extensions / OpenAPI integration
 - [ ] Publish `@lite-toon/bridge` to npm
 - [ ] Express / Hono / Edge adapters
-- [ ] Redis-backed auth store + rate limiter
+- [ ] Human-in-the-Loop (HITL) approval layer for `destructive` capabilities
 
 ---
 

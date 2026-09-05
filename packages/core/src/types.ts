@@ -40,6 +40,16 @@ export interface ResolvedToken {
 }
 
 /**
+ * Risk classification for a capability.
+ * - `read`        No side effects — safe to call without user confirmation.
+ * - `write`       Modifies user state (cart, profile, preferences).
+ * - `destructive` Irreversible mutation (delete, checkout, refund, revoke).
+ *
+ * Defaults to `'write'` when not specified.
+ */
+export type CapabilityRiskLevel = 'read' | 'write' | 'destructive';
+
+/**
  * Represents a single capability that an agent can execute.
  */
 export interface Capability {
@@ -48,6 +58,13 @@ export interface Capability {
   schema?: Record<string, any>;
   /** OAuth scopes required to invoke this capability. Use `[]` for public (no login) tools. */
   scopes?: string[];
+  /**
+   * Risk level of this capability.
+   * Defaults to `'write'` when omitted — conservative posture.
+   * Set explicitly to `'read'` for side-effect-free capabilities.
+   * Set to `'destructive'` for irreversible mutations.
+   */
+  riskLevel?: CapabilityRiskLevel;
   execute(params: any, context?: ExecutionContext): Promise<AgentResponse>;
 }
 

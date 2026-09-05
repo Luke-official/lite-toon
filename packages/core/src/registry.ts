@@ -83,9 +83,13 @@ export class CapabilityRegistry {
   exportMcpTools(): any[] {
     const tools: any[] = [];
     for (const capability of this.capabilities.values()) {
+      const risk = capability.riskLevel ?? 'write';
+      // Append risk annotation to description so the LLM can reason about
+      // whether to call the tool autonomously or ask for confirmation.
+      const description = `${capability.description} [risk: ${risk}]`;
       tools.push({
         name: capability.name,
-        description: capability.description,
+        description,
         inputSchema: capability.schema || {
           type: 'object',
           properties: {},

@@ -12,6 +12,7 @@ export type {
   AgentRequest,
   AgentResponse,
   Capability,
+  CapabilityRiskLevel,
   SecurityContext,
   UniversalAgentConfig,
   ExecutionContext,

@@ -66,6 +66,7 @@ export const getProducts: Capability = {
   description:
     "Returns the product catalog (public, no login). IDs: p1 Nike Shoes (€120), p2 Adidas T-Shirt (€35), p3 Puma Socks (€15).",
   scopes: [],
+  riskLevel: "read",
   execute: async () => ({
     success: true,
     data: productsDB,
@@ -76,6 +77,7 @@ export const getCart: Capability = {
   name: "getCart",
   description: "Returns the current contents of the user cart.",
   scopes: ["cart:read"],
+  riskLevel: "read",
   execute: async (_params, context) => {
     const userId = requireUserId(context);
     const cart = getUserCart(userId);
@@ -91,6 +93,7 @@ export const addToCart: Capability = {
   description:
     "Adds a product to the user cart. Use productId from getProducts: p1, p2, or p3.",
   scopes: ["cart:write"],
+  riskLevel: "write",
   schema: {
     type: "object",
     properties: {
@@ -131,6 +134,7 @@ export const removeFromCart: Capability = {
   description:
     "Removes a product from the user cart entirely. Use productId from getProducts: p1, p2, or p3.",
   scopes: ["cart:write"],
+  riskLevel: "write",
   schema: {
     type: "object",
     properties: {
@@ -163,6 +167,7 @@ export const clearCart: Capability = {
   name: "clearCart",
   description: "Removes all items from the user cart.",
   scopes: ["cart:write"],
+  riskLevel: "destructive",
   execute: async (_params, context) => {
     const userId = requireUserId(context);
     cartsByUser.set(userId, []);
