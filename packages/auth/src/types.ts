@@ -103,4 +103,10 @@ export interface OAuthServerConfig {
   codeTtlSeconds?: number;
   sessionTtlSeconds?: number;
   refreshTokenTtlSeconds?: number;
+  /**
+   * When set, access tokens are HMAC-SHA256 signed opaque tokens.
+   * Verification is local (no store round-trip required).
+   * Recommended for production. Use a 32+ byte random secret from env.
+   */
+  tokenSecret?: string;
 }

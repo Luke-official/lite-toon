@@ -43,6 +43,7 @@ export class OAuthServer implements TokenResolver {
       clientService: this.clients,
       tokenTtlSeconds: config.tokenTtlSeconds ?? 3_600,
       refreshTokenTtlSeconds: config.refreshTokenTtlSeconds ?? 86_400 * 30,
+      tokenSecret: config.tokenSecret,
     });
 
     this.authorization = new AuthorizationService({

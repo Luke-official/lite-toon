@@ -48,6 +48,11 @@ export interface SecurityGatekeeperOptions {
   maxRequests?: number;
   windowMs?: number;
   tokenResolver?: TokenResolver;
+  /**
+   * Optional list of valid API keys for legacy API-key auth.
+   * When empty or omitted, API key authentication is disabled.
+   */
+  allowedApiKeys?: string[];
 }
 
 /**
@@ -57,11 +62,13 @@ export class SecurityGatekeeper {
   private store: RateLimiterStore;
   private maxRequests: number;
   private tokenResolver?: TokenResolver;
+  private allowedApiKeys: string[];
 
   constructor(options?: SecurityGatekeeperOptions | RateLimiterStore, maxRequests: number = 100, windowMs: number = 60000) {
     if (options && 'increment' in options) {
       this.store = options;
       this.maxRequests = maxRequests;
+      this.allowedApiKeys = [];
       return;
     }
 
@@ -69,6 +76,7 @@ export class SecurityGatekeeper {
     this.store = config.store ?? new InMemoryRateLimiterStore(windowMs);
     this.maxRequests = config.maxRequests ?? maxRequests;
     this.tokenResolver = config.tokenResolver;
+    this.allowedApiKeys = config.allowedApiKeys ?? [];
   }
 
   /**
@@ -89,8 +97,10 @@ export class SecurityGatekeeper {
       throw new SecurityError(SecurityErrorCode.RATE_LIMIT_EXCEEDED, 'Too many requests.');
     }
 
-    if (context.apiKey && context.apiKey !== 'secret-dummy-token') {
-      throw new SecurityError(SecurityErrorCode.UNAUTHORIZED, 'Invalid API Key.');
+    if (context.apiKey) {
+      if (this.allowedApiKeys.length === 0 || !this.allowedApiKeys.includes(context.apiKey)) {
+        throw new SecurityError(SecurityErrorCode.UNAUTHORIZED, 'Invalid API Key.');
+      }
     }
 
     if (options.requireAuth || context.accessToken) {

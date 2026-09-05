@@ -48,7 +48,7 @@ Customer ← "Done! I added 2x Nike Shoes to your cart."
 |---|---|---|---|
 | ✅ **Supported** | **Claude** | MCP Streamable HTTP at `/api/mcp` + OAuth | MCP tool schemas + OAuth discovery |
 | ✅ **Supported** | **Next.js App Router** | Route factories in `@lite-toon/adapter-next` | Thin API route handlers |
-| 🔜 Not supported yet | **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
+| ✅ **Supported** | **ChatGPT** | Custom GPT Actions + OAuth | OpenAPI 3.1 from your capabilities |
 | 🔜 Not supported yet | **Gemini** | Extensions / Gems + OpenAPI | Gemini function declarations |
 | 🔜 Coming soon | **Express / Hono / Edge** | Framework adapters | Same core, different transport |
 
@@ -62,7 +62,7 @@ Customer ← "Done! I added 2x Nike Shoes to your cart."
 | JSON eats tokens on every call | **TOON** compresses tabular data 40–70% |
 | Who is this user? Whose cart? | **OAuth 2.0 + PKCE** with per-user `ExecutionContext` |
 | Multiple AI platforms = duplicate work | **One `CapabilityRegistry`**, many auto-exports (more agents coming) |
-| Security nightmares | `SecurityGatekeeper` — rate limits, scopes, token resolution |
+| Security nightmares | `SecurityGatekeeper` — rate limits, scopes, token resolution; configurable API key allowlist |
 | Framework lock-in | Pure TS core; **Next.js App Router** adapter ships today |
 
 ---
@@ -260,7 +260,28 @@ Full walkthrough: [`docs/integration/connect-agents.md`](docs/integration/connec
 
 Demo OAuth client ID: `lite-toon-demo` · Scopes: `cart:read cart:write`
 
-> **ChatGPT and Gemini are not supported yet.** They will be added in a future release.
+---
+
+## ✦ Connect ChatGPT
+
+**ChatGPT Custom GPT — 5-minute setup:**
+
+1. Run the demo: `npm run dev:clean`
+2. Expose HTTPS: `ngrok http 3000`
+3. In ChatGPT → **Explore GPTs → Create → Configure → Add actions**
+4. Import from URL: `https://<your-ngrok-host>/api/openapi.json`
+   - ChatGPT reads the OpenAPI 3.1 document and discovers all capabilities automatically
+5. Under **Authentication** → select **OAuth**, fill in:
+   - Authorization URL: `https://<your-ngrok-host>/api/oauth/authorize`
+   - Token URL: `https://<your-ngrok-host>/api/oauth/token`
+   - Client ID: `lite-toon-demo` · Client secret: *(leave blank)*
+   - Scope: `cart:read cart:write`
+6. Click **Save** — ChatGPT will test the connection
+7. Ask: *"What products are available?"* then *"Add 1 Puma Socks to my cart"*
+
+> **Note:** ChatGPT Custom GPT OAuth does not support dynamic client registration.
+> The client ID `lite-toon-demo` is pre-registered in the demo. For your own app,
+> set `OAUTH_CLIENT_ID` to your custom value in `.env.local`.
 
 ---
 
@@ -404,16 +425,15 @@ GetProductsResult[3]{id, name, price}:
 | Item | Notes |
 |---|---|
 | Source code in this repo | No API keys, `.env` files, or private keys are committed |
-| Demo OAuth client ID `lite-toon-demo` | Public identifier for Custom GPT / MCP setup — not a secret |
-| `secret-dummy-token` in `SecurityGatekeeper` | Placeholder for legacy API-key checks in samples — not a real credential |
+| Demo OAuth client ID `lite-toon-demo` | Public identifier for Claude MCP setup — not a secret |
 
 ### Demo-only behaviors (do not deploy as-is)
 
 | Area | Demo behavior | Production expectation |
 |---|---|---|
 | **Login** | Username only — no password | Real identity provider or credential verification |
-| **OAuth tokens** | Generated with `Math.random()` | `crypto.randomBytes()` or a signed JWT strategy |
-| **Auth store** | In-memory (`InMemoryAuthStore`) | Redis, database, or managed IdP session store |
+| **OAuth tokens** | Opaque random tokens (`crypto.randomBytes`) | Set `tokenSecret` in `OAuthServerConfig` for HMAC-signed tokens |
+| **Auth store** | In-memory (`InMemoryAuthStore`) | `RedisAuthStore` from `@lite-toon/auth/redis` |
 | **Session cookie** | `httpOnly` + `sameSite: lax`, no `secure` flag | Set `secure: true` behind HTTPS |
 | **`POST /api/agent`** | Anonymous access allowed; only `getProducts` works without a user | Require Bearer tokens or API keys for all sensitive capabilities |
 | **Rate limiting** | In-memory, per process | Shared store (e.g. Redis) across instances |
@@ -432,6 +452,49 @@ GetProductsResult[3]{id, name, price}:
 1. Copy [`.env.example`](.env.example) — never commit real secrets.
 2. Rotate any tokens if they were ever pasted into logs or chat tools.
 3. Review [`CONTRIBUTING.md`](CONTRIBUTING.md) for architecture rules and security expectations.
+
+---
+
+## ✦ Production Deployment
+
+The demo uses `InMemoryAuthStore` and plain opaque tokens. Two drop-in upgrades harden it for production:
+
+### 1. Redis-backed auth store
+
+```bash
+npm install ioredis
+```
+
+```typescript
+import Redis from 'ioredis';
+import { RedisAuthStore } from '@lite-toon/auth/redis';
+import { OAuthServer } from '@lite-toon/auth';
+
+const oauth = new OAuthServer({
+  store: new RedisAuthStore(new Redis(process.env.REDIS_URL!)),
+  clientId: process.env.OAUTH_CLIENT_ID!,
+  allowedRedirectUris: ['https://claude.ai/...'],
+  tokenSecret: process.env.LITE_TOON_TOKEN_SECRET,  // see below
+});
+```
+
+All sessions, tokens, and authorization codes are stored in Redis with automatic TTL expiry. Key prefix defaults to `lt:` — override with `new RedisAuthStore(redis, 'myapp')`.
+
+### 2. HMAC-signed access tokens
+
+Set `tokenSecret` in `OAuthServerConfig` to enable self-verifiable signed tokens. Token resolution no longer requires a store round-trip for valid, non-revoked tokens.
+
+```bash
+# Generate a secure secret (32+ bytes)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+```env
+# apps/demo/.env.local
+LITE_TOON_TOKEN_SECRET=your-64-char-hex-secret-here
+```
+
+Add `LITE_TOON_TOKEN_SECRET` to your `.env.local` (already in `.env.example`). When set, the auth server uses HMAC-SHA256 signed opaque tokens — no JWT library required.
 
 ---
 
@@ -468,11 +531,14 @@ The demo shop UI uses normal REST (`/api/cart`) for humans. Claude uses the Lite
 - [x] OAuth 2.0 user auth with per-user carts + MCP OAuth discovery
 - [x] Claude via MCP Streamable HTTP (`/api/mcp`)
 - [x] Demo shop UI + `/connect` developer guide
-- [ ] ChatGPT Custom GPT / Actions (OpenAPI + `/api/tools/*`)
+- [x] ChatGPT Custom GPT / Actions (OpenAPI 3.1 + `/api/tools/*`)
+- [x] HMAC-SHA256 signed tokens (`tokenSecret` option)
+- [x] `RedisAuthStore` adapter (`@lite-toon/auth/redis`)
+- [x] Capability `riskLevel` field (`read` / `write` / `destructive`)
 - [ ] Gemini Extensions / OpenAPI integration
 - [ ] Publish `@lite-toon/bridge` to npm
 - [ ] Express / Hono / Edge adapters
-- [ ] Redis-backed auth store + rate limiter
+- [ ] Human-in-the-Loop (HITL) approval layer for `destructive` capabilities
 
 ---
 

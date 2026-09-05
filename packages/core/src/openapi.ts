@@ -30,11 +30,13 @@ export function buildOpenApiDocument(
   for (const capability of capabilities) {
     const pathKey = `${prefix}/${capability.name}`;
     const requiredScopes = capabilityScopes(capability);
+    const riskLevel = capability.riskLevel ?? 'write';
 
     const operation: Record<string, unknown> = {
       operationId: capability.name,
       summary: capability.description,
       description: capability.description,
+      'x-risk-level': riskLevel,
       requestBody: {
         required: true,
         content: {
