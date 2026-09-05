@@ -62,7 +62,7 @@ Customer ← "Done! I added 2x Nike Shoes to your cart."
 | JSON eats tokens on every call | **TOON** compresses tabular data 40–70% |
 | Who is this user? Whose cart? | **OAuth 2.0 + PKCE** with per-user `ExecutionContext` |
 | Multiple AI platforms = duplicate work | **One `CapabilityRegistry`**, many auto-exports (more agents coming) |
-| Security nightmares | `SecurityGatekeeper` — rate limits, scopes, token resolution |
+| Security nightmares | `SecurityGatekeeper` — rate limits, scopes, token resolution; configurable API key allowlist |
 | Framework lock-in | Pure TS core; **Next.js App Router** adapter ships today |
 
 ---
@@ -404,8 +404,7 @@ GetProductsResult[3]{id, name, price}:
 | Item | Notes |
 |---|---|
 | Source code in this repo | No API keys, `.env` files, or private keys are committed |
-| Demo OAuth client ID `lite-toon-demo` | Public identifier for Custom GPT / MCP setup — not a secret |
-| `secret-dummy-token` in `SecurityGatekeeper` | Placeholder for legacy API-key checks in samples — not a real credential |
+| Demo OAuth client ID `lite-toon-demo` | Public identifier for Claude MCP setup — not a secret |
 
 ### Demo-only behaviors (do not deploy as-is)
 

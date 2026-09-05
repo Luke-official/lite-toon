@@ -6,9 +6,10 @@ import {
   RegisteredClientRecord,
   SessionRecord,
 } from './types';
+import { randomBytes } from 'crypto';
 
 function randomId(prefix: string): string {
-  return `${prefix}_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  return `${prefix}_${randomBytes(16).toString('hex')}`;
 }
 
 /**

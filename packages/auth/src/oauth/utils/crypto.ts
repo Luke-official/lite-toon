@@ -1,5 +1,7 @@
+import { randomBytes } from 'crypto';
+
 export function randomToken(): string {
-  return `lt_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  return `lt_${randomBytes(32).toString('hex')}`;
 }
 
 export async function sha256Base64Url(input: string): Promise<string> {
