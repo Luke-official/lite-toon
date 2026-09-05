@@ -10,15 +10,27 @@
   },
   "bugs": "https://github.com/Luke-official/lite-toon/issues",
   "homepage": "https://github.com/Luke-official/lite-toon#readme",
-  "keywords": ["oauth", "pkce", "authentication", "ai-agents", "mcp"],
+  "keywords": [
+    "oauth",
+    "pkce",
+    "authentication",
+    "ai-agents",
+    "mcp"
+  ],
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./redis": {
+      "types": "./dist/store-redis.d.ts",
+      "import": "./dist/store-redis.js"
     }
   },
   "scripts": {
@@ -29,6 +41,15 @@
     "@lite-toon/core": "*"
   },
   "devDependencies": {
+    "ioredis": "^6.0.0",
     "typescript": "^5"
+  },
+  "peerDependencies": {
+    "ioredis": ">=5"
+  },
+  "peerDependenciesMeta": {
+    "ioredis": {
+      "optional": true
+    }
   }
 }

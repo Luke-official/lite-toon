@@ -411,8 +411,8 @@ GetProductsResult[3]{id, name, price}:
 | Area | Demo behavior | Production expectation |
 |---|---|---|
 | **Login** | Username only — no password | Real identity provider or credential verification |
-| **OAuth tokens** | Generated with `Math.random()` | `crypto.randomBytes()` or a signed JWT strategy |
-| **Auth store** | In-memory (`InMemoryAuthStore`) | Redis, database, or managed IdP session store |
+| **OAuth tokens** | Opaque random tokens (`crypto.randomBytes`) | Set `tokenSecret` in `OAuthServerConfig` for HMAC-signed tokens |
+| **Auth store** | In-memory (`InMemoryAuthStore`) | `RedisAuthStore` from `@lite-toon/auth/redis` |
 | **Session cookie** | `httpOnly` + `sameSite: lax`, no `secure` flag | Set `secure: true` behind HTTPS |
 | **`POST /api/agent`** | Anonymous access allowed; only `getProducts` works without a user | Require Bearer tokens or API keys for all sensitive capabilities |
 | **Rate limiting** | In-memory, per process | Shared store (e.g. Redis) across instances |
@@ -431,6 +431,49 @@ GetProductsResult[3]{id, name, price}:
 1. Copy [`.env.example`](.env.example) — never commit real secrets.
 2. Rotate any tokens if they were ever pasted into logs or chat tools.
 3. Review [`CONTRIBUTING.md`](CONTRIBUTING.md) for architecture rules and security expectations.
+
+---
+
+## ✦ Production Deployment
+
+The demo uses `InMemoryAuthStore` and plain opaque tokens. Two drop-in upgrades harden it for production:
+
+### 1. Redis-backed auth store
+
+```bash
+npm install ioredis
+```
+
+```typescript
+import Redis from 'ioredis';
+import { RedisAuthStore } from '@lite-toon/auth/redis';
+import { OAuthServer } from '@lite-toon/auth';
+
+const oauth = new OAuthServer({
+  store: new RedisAuthStore(new Redis(process.env.REDIS_URL!)),
+  clientId: process.env.OAUTH_CLIENT_ID!,
+  allowedRedirectUris: ['https://claude.ai/...'],
+  tokenSecret: process.env.LITE_TOON_TOKEN_SECRET,  // see below
+});
+```
+
+All sessions, tokens, and authorization codes are stored in Redis with automatic TTL expiry. Key prefix defaults to `lt:` — override with `new RedisAuthStore(redis, 'myapp')`.
+
+### 2. HMAC-signed access tokens
+
+Set `tokenSecret` in `OAuthServerConfig` to enable self-verifiable signed tokens. Token resolution no longer requires a store round-trip for valid, non-revoked tokens.
+
+```bash
+# Generate a secure secret (32+ bytes)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+```env
+# apps/demo/.env.local
+LITE_TOON_TOKEN_SECRET=your-64-char-hex-secret-here
+```
+
+Add `LITE_TOON_TOKEN_SECRET` to your `.env.local` (already in `.env.example`). When set, the auth server uses HMAC-SHA256 signed opaque tokens — no JWT library required.
 
 ---
 
