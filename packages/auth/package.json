@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "ioredis": "^6.0.0",
-    "typescript": "^5"
+    "typescript": "^7"
   },
   "peerDependencies": {
     "ioredis": ">=5"
