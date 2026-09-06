@@ -1,0 +1,41 @@
+{
+  "name": "@lite-toon/adapter-fastify",
+  "version": "0.1.0",
+  "description": "Fastify route factories for Lite-Toon (MCP, OAuth, TOON agent)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/adapter-fastify"
+  },
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@lite-toon/adapter-next": "*",
+    "@lite-toon/auth": "*",
+    "@lite-toon/core": "*",
+    "@lite-toon/toon": "*"
+  },
+  "peerDependencies": {
+    "fastify": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@types/cookie": "^0.6.0",
+    "fastify": "^4.28.1",
+    "typescript": "^5"
+  }
+}

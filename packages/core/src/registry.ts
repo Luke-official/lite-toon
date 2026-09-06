@@ -1,4 +1,4 @@
-import { Capability, AgentResponse, ExecutionContext, OpenApiExportOptions } from './types';
+import { Capability, AgentResponse, ExecutionContext, OpenApiExportOptions, HitlStore } from './types';
 import { buildOpenApiDocument } from './openapi';
 
 /**
@@ -6,6 +6,11 @@ import { buildOpenApiDocument } from './openapi';
  */
 export class CapabilityRegistry {
   private capabilities: Map<string, Capability> = new Map();
+  private hitlStore?: HitlStore;
+
+  constructor(hitlStore?: HitlStore) {
+    this.hitlStore = hitlStore;
+  }
 
   /**
    * Registers a new capability in the registry.
@@ -61,6 +66,35 @@ export class CapabilityRegistry {
           success: false,
           message: `Missing required scopes: ${missing.join(', ')}`,
         };
+      }
+    }
+
+    if (capability.riskLevel === 'destructive') {
+      const approvalToken = params?._approvalToken;
+      
+      if (approvalToken && this.hitlStore) {
+        const hitlRequest = await this.hitlStore.get(approvalToken);
+        if (!hitlRequest) {
+          return { success: false, message: 'Invalid or expired approval token.' };
+        }
+        if (hitlRequest.status !== 'approved') {
+          return { success: false, message: `Action cannot be executed. Current status: ${hitlRequest.status}` };
+        }
+        
+        await this.hitlStore.updateStatus(hitlRequest.id, 'expired');
+        delete params._approvalToken;
+      } else if (this.hitlStore) {
+        const hitlRequest = await this.hitlStore.create({
+          capabilityName: name,
+          params,
+          context
+        });
+        return {
+          success: false,
+          message: `Action requires human approval. Approval ID: ${hitlRequest.id}. Please ask the user to approve this action in their dashboard, then retry with the approval token passed as '_approvalToken' in the parameters.`,
+        };
+      } else {
+        console.warn(`Executing destructive capability '${name}' without a HitlStore configured.`);
       }
     }
 

@@ -1,0 +1,32 @@
+{
+  "name": "@lite-toon/adapter-stdio",
+  "version": "0.1.0",
+  "description": "Standard I/O MCP transport adapter for Lite-Toon",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/adapter-stdio"
+  },
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@lite-toon/core": "*",
+    "@lite-toon/adapter-next": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}

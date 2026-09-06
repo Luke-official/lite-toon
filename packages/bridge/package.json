@@ -27,6 +27,26 @@
     "./next": {
       "types": "./dist/next.d.ts",
       "import": "./dist/next.js"
+    },
+    "./hono": {
+      "types": "./dist/hono.d.ts",
+      "import": "./dist/hono.js"
+    },
+    "./express": {
+      "types": "./dist/express.d.ts",
+      "import": "./dist/express.js"
+    },
+    "./fastify": {
+      "types": "./dist/fastify.d.ts",
+      "import": "./dist/fastify.js"
+    },
+    "./stdio": {
+      "types": "./dist/stdio.d.ts",
+      "import": "./dist/stdio.js"
+    },
+    "./vercel": {
+      "types": "./dist/vercel.d.ts",
+      "import": "./dist/vercel.js"
     }
   },
   "scripts": {
@@ -37,7 +57,11 @@
     "@lite-toon/adapter-next": "*",
     "@lite-toon/auth": "*",
     "@lite-toon/core": "*",
-    "@lite-toon/toon": "*"
+    "@lite-toon/toon": "*",
+    "@lite-toon/adapter-hono": "*",
+    "@lite-toon/adapter-express": "*",
+    "@lite-toon/adapter-fastify": "*",
+    "@lite-toon/adapter-stdio": "*"
   },
   "devDependencies": {
     "typescript": "^5"

@@ -1,0 +1,38 @@
+{
+  "name": "@lite-toon/adapter-hono",
+  "version": "0.1.0",
+  "description": "Hono route factories for Lite-Toon (MCP, OAuth, TOON agent)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Luke-official/lite-toon.git",
+    "directory": "packages/adapter-hono"
+  },
+  "type": "module",
+  "files": ["dist"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@lite-toon/auth": "*",
+    "@lite-toon/core": "*",
+    "@lite-toon/toon": "*",
+    "@lite-toon/adapter-next": "*"
+  },
+  "peerDependencies": {
+    "hono": ">=4"
+  },
+  "devDependencies": {
+    "hono": "^4.6.1",
+    "typescript": "^5"
+  }
+}

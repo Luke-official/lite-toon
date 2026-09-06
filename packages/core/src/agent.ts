@@ -11,7 +11,7 @@ export class UniversalAgent {
   public gatekeeper: SecurityGatekeeper;
 
   constructor(config?: UniversalAgentConfig) {
-    this.registry = new CapabilityRegistry();
+    this.registry = new CapabilityRegistry(config?.hitlStore);
     this.gatekeeper = new SecurityGatekeeper({
       tokenResolver: config?.tokenResolver,
     });

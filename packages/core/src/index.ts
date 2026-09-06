@@ -1,5 +1,6 @@
 export { UniversalAgent } from './agent';
 export { CapabilityRegistry } from './registry';
+export * from './hitl';
 export { buildOpenApiDocument } from './openapi';
 export { capabilityRequiresAuth } from './capability-auth';
 export { SecurityError, SecurityErrorCode } from './errors/SecurityError';
@@ -22,4 +23,7 @@ export type {
   ResolvedAccess,
   OpenApiOAuthConfig,
   OpenApiExportOptions,
+  HitlStore,
+  HitlRequest,
+  HitlStatus
 } from './types';

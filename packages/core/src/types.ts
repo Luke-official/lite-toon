@@ -22,6 +22,7 @@ export interface ExecutionContext {
   userId: string;
   agentId: string;
   scopes: string[];
+  approvalToken?: string;
 }
 
 /**
@@ -121,4 +122,32 @@ export interface OpenApiExportOptions {
 export interface UniversalAgentConfig {
   capabilities: Capability[];
   tokenResolver?: TokenResolver;
+  hitlStore?: HitlStore;
+}
+
+/**
+ * Status of a Human-in-the-Loop approval request.
+ */
+export type HitlStatus = 'pending' | 'approved' | 'rejected' | 'expired';
+
+/**
+ * Represents a pending execution that requires human approval.
+ */
+export interface HitlRequest {
+  id: string;
+  capabilityName: string;
+  params: any;
+  context?: ExecutionContext;
+  status: HitlStatus;
+  createdAt: number;
+}
+
+/**
+ * Interface for persisting HITL approval requests.
+ */
+export interface HitlStore {
+  create(request: Omit<HitlRequest, 'id' | 'createdAt' | 'status'>): Promise<HitlRequest>;
+  get(id: string): Promise<HitlRequest | null>;
+  updateStatus(id: string, status: HitlStatus): Promise<boolean>;
+  listPending(): Promise<HitlRequest[]>;
 }

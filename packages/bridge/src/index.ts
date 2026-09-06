@@ -4,6 +4,7 @@ export {
   SecurityGatekeeper,
   InMemoryRateLimiterStore,
   buildOpenApiDocument,
+  InMemoryHitlStore,
 } from '@lite-toon/core';
 export type {
   AgentRequest,
@@ -20,6 +21,9 @@ export type {
   OpenApiOAuthConfig,
   OpenApiExportOptions,
   SecurityGatekeeperOptions,
+  HitlStore,
+  HitlRequest,
+  HitlStatus,
 } from '@lite-toon/core';
 export { formatToon, parseToon } from '@lite-toon/toon';
 export type { ToonObject, ToonParseResult } from '@lite-toon/toon';
