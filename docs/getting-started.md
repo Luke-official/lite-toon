@@ -1,32 +1,64 @@
 # Getting Started
 
-This guide gets the Lite-Toon demo running locally and verifies each transport layer works.
+Get the lite-toon **TaskFlow** demo running locally in under 5 minutes.
 
-> **Project status:** Lite-Toon is in early development. Fully tested and supported today: **Next.js App Router**, **Claude MCP** (`/api/mcp`), and direct **TOON** access (`/api/agent`). **ChatGPT and Gemini are not supported yet** — coming soon.
+> **Project status:** Fully supported today — **Next.js App Router**, **Claude MCP** (`/api/mcp`), **Hono**, **Express**, **Fastify**, and **Stdio** adapters. ChatGPT Actions and Gemini Extensions are not yet supported.
+
+---
 
 ## Prerequisites
 
 | Requirement | Version |
 |---|---|
 | Node.js | 18+ |
-| npm | 10+ (workspaces) |
+| npm | 10+ (workspace support required) |
 | OS | Windows, macOS, or Linux |
 
+---
+
 ## Install and run
+
+Run all commands from the **monorepo root** (`lite-toon/`):
 
 ```bash
 git clone https://github.com/Luke-official/lite-toon.git
 cd lite-toon
 npm install
 npm run build
-npm run dev:clean
+npm run dev -w apps/demo
 ```
 
-`dev:clean` kills stale processes on ports 3000–3002, then starts Turbo dev for all workspaces.
+> **Windows PowerShell note:** Do not chain commands with `&&` — PowerShell 5.1 does not support it. Run commands on separate lines or use `;`.
 
-### Environment variables (optional)
+The demo starts at **[http://localhost:3000](http://localhost:3000)**.
 
-Copy the example env file if you need overrides:
+### What `npm run build` does
+
+It builds all `@lite-toon/*` packages in dependency order (toon → core → auth → adapters → bridge) before starting the demo. You only need to run it once, or again after pulling changes to package source files.
+
+---
+
+## Explore the demo
+
+| URL | What you'll see |
+|---|---|
+| [http://localhost:3000](http://localhost:3000) | TaskFlow — Kanban board (Todo / In Progress / Done) |
+| [http://localhost:3000/connect](http://localhost:3000/connect) | Step-by-step guide to connect Claude |
+| [http://localhost:3000/hitl](http://localhost:3000/hitl) | Human-in-the-Loop approval queue |
+| [http://localhost:3000/login](http://localhost:3000/login) | Register / sign in |
+
+### Try the board
+
+1. Open the homepage — 5 pre-seeded tasks appear on the board.
+2. Sign in at `/login` with any username (e.g. `alice`).
+3. Add a task using the inline **+ Add task** button in any column.
+4. Connect Claude via `/connect` and ask it to plan your week — tasks appear on the board in real time with a **✦ AI** badge.
+
+---
+
+## Environment variables (optional)
+
+All variables are optional for local development.
 
 ```bash
 cp .env.example apps/demo/.env.local
@@ -37,102 +69,71 @@ cp .env.example apps/demo/.env.local
 | `OAUTH_CLIENT_ID` | `lite-toon-demo` | OAuth client identifier |
 | `BASE_URL` | `http://localhost:3000` | Base URL for test scripts |
 
-All variables are optional for local development.
-
-## Explore the demo
-
-| URL | What you'll see |
-|---|---|
-| [http://localhost:3000](http://localhost:3000) | LiteShop — browse catalog, sign in, add to cart |
-| [http://localhost:3000/connect](http://localhost:3000/connect) | Developer guide to wire **Claude** to the shop |
-| [http://localhost:3000/login](http://localhost:3000/login) | Session login (same username as OAuth for Claude) |
-
-### Try the shop UI
-
-1. Open the homepage and browse the product catalog (no login required).
-2. Sign in at `/login` with any username (e.g. `alice`).
-3. Click **Add to cart** on a product — the cart sidebar updates immediately.
-4. Optional: connect Claude via `/connect` and ask it to add items — the same cart syncs when you refocus the browser tab.
+---
 
 ## Verify with test scripts
 
 With the dev server running, open a second terminal:
 
 ```bash
-# TOON via POST /api/agent
-npm run test:api -w @lite-toon/demo
+# Capability unit tests (no server needed)
+npm run test:tasks -w apps/demo
 
-# MCP Streamable HTTP + OAuth discovery (Claude)
-npm run test:mcp -w @lite-toon/demo
+# MCP Streamable HTTP smoke test (initialize + tools/list)
+npm run test:mcp -w apps/demo
+
+# TOON/JSON via POST /api/agent
+npm run test:api -w apps/demo
+
+# OAuth PKCE flow + tools/call
+npm run test:oauth -w apps/demo
 ```
 
-`test:mcp` and `test:api` are the primary smoke tests. `test:oauth` covers internal OpenAPI/tools routes that will power ChatGPT/Gemini when those platforms are supported — **do not use them for ChatGPT or Gemini integration today.**
+---
 
-## Your first TOON request (curl)
+## Your first tool call (curl)
 
-```bash
-curl -X POST http://localhost:3000/api/agent \
-  -H "Content-Type: text/plain" \
-  -H "x-agent-id: my-agent" \
-  -d 'request[1]{action, params}:
-  "getProducts", "{}"'
-```
-
-Expected response (TOON):
-
-```
-GetProductsResult[3]{id, name, price}:
-  p1, "Nike Shoes", 120
-  p2, "Adidas T-Shirt", 35
-  p3, "Puma Socks", 15
-```
-
-### JSON request/response
+List tasks via the TOON agent protocol (no auth required for a quick test):
 
 ```bash
 curl -X POST http://localhost:3000/api/agent \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
   -H "x-agent-id: my-agent" \
-  -d '{"action":"getProducts","params":{}}'
+  -d '{"action":"listTasks","params":{}}'
 ```
 
-## Your first authenticated tool call
+Expected response:
 
-The `/api/tools/*` endpoints require OAuth. The fastest path locally is the test script:
-
-```bash
-npm run test:oauth -w @lite-toon/demo
+```json
+{
+  "success": true,
+  "data": [
+    { "id": "...", "title": "Finish onboarding docs", "status": "in-progress", "priority": "high", ... },
+    ...
+  ]
+}
 ```
 
-It performs: login → authorize → token exchange → `addToCart` → `getCart`.
+> `listTasks` requires `tasks:read` scope when called with an OAuth token. Without a token it still works — it resolves as `anonymous` and seeds a fresh board.
 
-See [OAuth & Authentication](./concepts/oauth.md) for the full flow.
+---
 
-## Project commands
+## Monorepo commands
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start all workspaces via Turbo |
-| `npm run dev:clean` | Kill ports 3000–3002, then dev |
-| `npm run build` | Build all packages + demo |
+| `npm run test:mcp -w apps/demo` | MCP smoke test |
 | `npm run lint` | Lint via Turbo |
-| `npm run kill-ports` | Free ports 3000, 3001, 3002 |
 
-### Windows PowerShell note
-
-Avoid chaining with `&&` on PowerShell 5.1. Use separate lines or `;`:
-
-```powershell
-cd lite-toon ; npm install
-```
+---
 
 ## Next steps
 
 | Goal | Document |
 |---|---|
-| Understand every layer of the codebase | [Study Guide](./guide/study-guide.md) |
-| Connect Claude to your deployment | [Connect Agents](./integration/connect-agents.md) |
+| Connect Claude to the running demo | [Connect Agents](./integration/connect-agents.md) |
 | Add your own business logic | [Capabilities](./concepts/capabilities.md) |
-| Wire Lite-Toon into your Next.js app | [Next.js Integration](./integration/nextjs.md) |
+| Wire lite-toon into your Next.js app | [Next.js Integration](./integration/nextjs.md) |
+| Understand the full codebase | [Study Guide](./guide/study-guide.md) |
 | Look up endpoints and headers | [API Reference](./reference/api.md) |

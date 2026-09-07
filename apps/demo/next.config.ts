@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
     "@lite-toon/adapter-next",
   ],
   // Required for ngrok / Claude OAuth in development (cross-origin to localhost).
+  images: {
+    remotePatterns: [
+      { hostname: "*.ngrok-free.app" },
+      { hostname: "*.ngrok.io" },
+      { hostname: "*.ngrok.app" }
+    ]
+  },
+  // Custom property handled by Next.js middleware / server actions
   allowedDevOrigins: [
     "*.ngrok-free.app",
     "*.ngrok.io",

@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base: #0d0f14;
+  --bg-surface: #161920;
+  --bg-elevated: #1e2130;
+  --bg-border: #2a2e3d;
+  --text-primary: #e8eaf0;
+  --text-secondary: #8890a8;
+  --text-muted: #4a5168;
+  --accent: #6c63ff;
+  --accent-dim: #3d3880;
+  --accent-glow: rgba(108, 99, 255, 0.15);
+  --ai-color: #a78bfa;
+  --ai-glow: rgba(167, 139, 250, 0.12);
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --priority-high: #f87171;
+  --priority-medium: #fbbf24;
+  --priority-low: #34d399;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-base);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  min-height: 100dvh;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--bg-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Glassmorphism card */
+.glass {
+  background: var(--bg-surface);
+  border: 1px solid var(--bg-border);
+  border-radius: 12px;
+}
+
+.glass-elevated {
+  background: var(--bg-elevated);
+  border: 1px solid var(--bg-border);
+  border-radius: 12px;
+}
+
+/* AI badge glow */
+.ai-badge {
+  background: var(--ai-glow);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  color: var(--ai-color);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Priority dots */
+.priority-high   { color: var(--priority-high); }
+.priority-medium { color: var(--priority-medium); }
+.priority-low    { color: var(--priority-low); }
+
+/* Smooth transitions */
+.transition-all-200 {
+  transition: all 0.2s ease;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

@@ -1,179 +1,273 @@
-import { ExecutionContext, Capability } from "@lite-toon/core";
-
-export interface Product {
-  id: string;
-  name: string;
-  price: number;
-}
-
-export interface CartItem {
-  productId: string;
-  quantity: number;
-}
-
-export interface CartLine extends CartItem {
-  name: string;
-  price: number;
-  subtotal: number;
-}
-
-export const PRODUCT_CATALOG: readonly Product[] = [
-  { id: "p1", name: "Nike Shoes", price: 120 },
-  { id: "p2", name: "Adidas T-Shirt", price: 35 },
-  { id: "p3", name: "Puma Socks", price: 15 },
-] as const;
-
-const productsDB: Product[] = [...PRODUCT_CATALOG];
-const cartsByUser = new Map<string, CartItem[]>();
-
-function getUserCart(userId: string): CartItem[] {
-  if (!cartsByUser.has(userId)) {
-    cartsByUser.set(userId, []);
-  }
-  return cartsByUser.get(userId)!;
-}
+import { Capability, ExecutionContext } from '@lite-toon/core';
+import { taskDb, TaskStatus, TaskPriority } from './db';
+import { seedUserIfEmpty } from './seed';
 
 function requireUserId(context?: ExecutionContext): string {
-  if (!context?.userId || context.userId === "anonymous") {
-    throw new Error("Authenticated user is required for this operation.");
+  if (!context?.userId || context.userId === 'anonymous') {
+    throw new Error('Authenticated user is required for this operation.');
   }
   return context.userId;
 }
 
-export function enrichCart(cart: CartItem[]): CartLine[] {
-  return cart.map((item) => {
-    const product = productsDB.find((p) => p.id === item.productId);
-    const price = product?.price ?? 0;
-    return {
-      ...item,
-      name: product?.name ?? "Unknown product",
-      price,
-      subtotal: price * item.quantity,
-    };
-  });
+function getAndSeed(context?: ExecutionContext): string {
+  const userId = requireUserId(context);
+  seedUserIfEmpty(userId);
+  return userId;
 }
 
-export function getCartTotal(cart: CartItem[]): number {
-  return enrichCart(cart).reduce((sum, line) => sum + line.subtotal, 0);
-}
+// ─────────────────────────────────────────
+// READ capabilities
+// ─────────────────────────────────────────
 
-export function getCartItemCount(cart: CartItem[]): number {
-  return cart.reduce((sum, item) => sum + item.quantity, 0);
-}
-
-export const getProducts: Capability = {
-  name: "getProducts",
+export const listTasks: Capability = {
+  name: 'listTasks',
   description:
-    "Returns the product catalog (public, no login). IDs: p1 Nike Shoes (€120), p2 Adidas T-Shirt (€35), p3 Puma Socks (€15).",
-  scopes: [],
-  riskLevel: "read",
-  execute: async () => ({
-    success: true,
-    data: productsDB,
-  }),
-};
-
-export const getCart: Capability = {
-  name: "getCart",
-  description: "Returns the current contents of the user cart.",
-  scopes: ["cart:read"],
-  riskLevel: "read",
-  execute: async (_params, context) => {
-    const userId = requireUserId(context);
-    const cart = getUserCart(userId);
-    return {
-      success: true,
-      data: cart,
-    };
-  },
-};
-
-export const addToCart: Capability = {
-  name: "addToCart",
-  description:
-    "Adds a product to the user cart. Use productId from getProducts: p1, p2, or p3.",
-  scopes: ["cart:write"],
-  riskLevel: "write",
+    'Returns the user\'s tasks. Optionally filter by status ("todo", "in-progress", "done"), priority ("low", "medium", "high"), or a tag string.',
+  scopes: ['tasks:read'],
+  riskLevel: 'read',
   schema: {
-    type: "object",
+    type: 'object',
     properties: {
-      productId: { type: "string" },
-      quantity: { type: "number" },
+      status: { type: 'string', enum: ['todo', 'in-progress', 'done'] },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+      tag: { type: 'string' },
     },
-    required: ["productId", "quantity"],
   },
-  execute: async (params: { productId?: string; quantity?: number }, context) => {
-    const userId = requireUserId(context);
-    const { productId, quantity } = params || {};
-    if (!productId || typeof quantity !== "number") {
-      throw new Error("Invalid parameters for addToCart.");
-    }
-
-    const product = productsDB.find((p) => p.id === productId);
-    if (!product) {
-      throw new Error(`Product with ID ${productId} not found.`);
-    }
-
-    const cart = getUserCart(userId);
-    const existingItem = cart.find((item) => item.productId === productId);
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.push({ productId, quantity });
-    }
-
-    return {
-      success: true,
-      data: cart,
-    };
+  execute: async (params: { status?: TaskStatus; priority?: TaskPriority; tag?: string }, context) => {
+    const userId = getAndSeed(context);
+    const tasks = taskDb.list(userId, params);
+    return { success: true, data: tasks };
   },
 };
 
-export const removeFromCart: Capability = {
-  name: "removeFromCart",
-  description:
-    "Removes a product from the user cart entirely. Use productId from getProducts: p1, p2, or p3.",
-  scopes: ["cart:write"],
-  riskLevel: "write",
+export const getTask: Capability = {
+  name: 'getTask',
+  description: 'Returns a single task by its ID.',
+  scopes: ['tasks:read'],
+  riskLevel: 'read',
   schema: {
-    type: "object",
+    type: 'object',
     properties: {
-      productId: { type: "string" },
+      id: { type: 'string' },
     },
-    required: ["productId"],
+    required: ['id'],
   },
-  execute: async (params: { productId?: string }, context) => {
-    const userId = requireUserId(context);
-    const { productId } = params ?? {};
-    if (!productId) {
-      throw new Error("productId is required.");
-    }
+  execute: async (params: { id: string }, context) => {
+    const userId = getAndSeed(context);
+    const task = taskDb.get(userId, params.id);
+    if (!task) return { success: false, message: `Task "${params.id}" not found.` };
+    return { success: true, data: task };
+  },
+};
 
-    const cart = getUserCart(userId);
-    const index = cart.findIndex((item) => item.productId === productId);
-    if (index === -1) {
-      throw new Error(`Product ${productId} is not in the cart.`);
-    }
+// ─────────────────────────────────────────
+// WRITE capabilities (fully autonomous)
+// ─────────────────────────────────────────
 
-    cart.splice(index, 1);
+export const createTask: Capability = {
+  name: 'createTask',
+  description:
+    'Creates a new task. Required: title. Optional: description, status ("todo", "in-progress", "done"), priority ("low", "medium", "high"), tags (array of strings), dueDate (YYYY-MM-DD).',
+  scopes: ['tasks:write'],
+  riskLevel: 'write',
+  schema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string' },
+      description: { type: 'string' },
+      status: { type: 'string', enum: ['todo', 'in-progress', 'done'] },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+      tags: { type: 'array', items: { type: 'string' } },
+      dueDate: { type: 'string' },
+    },
+    required: ['title'],
+  },
+  execute: async (
+    params: { title: string; description?: string; status?: TaskStatus; priority?: TaskPriority; tags?: string[]; dueDate?: string },
+    context
+  ) => {
+    const userId = getAndSeed(context);
+    const task = taskDb.create(userId, {
+      title: params.title,
+      description: params.description,
+      status: params.status ?? 'todo',
+      priority: params.priority ?? 'medium',
+      tags: params.tags ?? [],
+      dueDate: params.dueDate,
+      lastModifiedBy: 'ai',
+    });
+    return { success: true, data: task };
+  },
+};
+
+export const updateTask: Capability = {
+  name: 'updateTask',
+  description: 'Updates the title, description, tags, or dueDate of an existing task. Use setStatus or setPriority to change status or priority.',
+  scopes: ['tasks:write'],
+  riskLevel: 'write',
+  schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      title: { type: 'string' },
+      description: { type: 'string' },
+      tags: { type: 'array', items: { type: 'string' } },
+      dueDate: { type: 'string' },
+    },
+    required: ['id'],
+  },
+  execute: async (
+    params: { id: string; title?: string; description?: string; tags?: string[]; dueDate?: string },
+    context
+  ) => {
+    const userId = getAndSeed(context);
+    const { id, ...patch } = params;
+    const task = taskDb.update(userId, id, { ...patch, lastModifiedBy: 'ai' });
+    if (!task) return { success: false, message: `Task "${id}" not found.` };
+    return { success: true, data: task };
+  },
+};
+
+export const setStatus: Capability = {
+  name: 'setStatus',
+  description: 'Changes the status of a task. Valid statuses: "todo", "in-progress", "done".',
+  scopes: ['tasks:write'],
+  riskLevel: 'write',
+  schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      status: { type: 'string', enum: ['todo', 'in-progress', 'done'] },
+    },
+    required: ['id', 'status'],
+  },
+  execute: async (params: { id: string; status: TaskStatus }, context) => {
+    const userId = getAndSeed(context);
+    const task = taskDb.updateStatus(userId, params.id, params.status, 'ai');
+    if (!task) return { success: false, message: `Task "${params.id}" not found.` };
+    return { success: true, data: task };
+  },
+};
+
+export const setPriority: Capability = {
+  name: 'setPriority',
+  description: 'Changes the priority of a task. Valid priorities: "low", "medium", "high".',
+  scopes: ['tasks:write'],
+  riskLevel: 'write',
+  schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+    },
+    required: ['id', 'priority'],
+  },
+  execute: async (params: { id: string; priority: TaskPriority }, context) => {
+    const userId = getAndSeed(context);
+    const task = taskDb.updatePriority(userId, params.id, params.priority, 'ai');
+    if (!task) return { success: false, message: `Task "${params.id}" not found.` };
+    return { success: true, data: task };
+  },
+};
+
+export const bulkSetStatus: Capability = {
+  name: 'bulkSetStatus',
+  description:
+    'Changes the status of multiple tasks at once. Provide an array of task IDs and the target status. Perfect for batch operations like "mark all in-progress tasks as done".',
+  scopes: ['tasks:write'],
+  riskLevel: 'write',
+  schema: {
+    type: 'object',
+    properties: {
+      ids: { type: 'array', items: { type: 'string' } },
+      status: { type: 'string', enum: ['todo', 'in-progress', 'done'] },
+    },
+    required: ['ids', 'status'],
+  },
+  execute: async (params: { ids: string[]; status: TaskStatus }, context) => {
+    const userId = getAndSeed(context);
+    const results = params.ids.map(id => taskDb.updateStatus(userId, id, params.status, 'ai'));
+    const updated = results.filter(Boolean);
     return {
       success: true,
-      data: cart,
+      data: { updated: updated.length, tasks: updated },
+      message: `Updated ${updated.length} of ${params.ids.length} tasks to "${params.status}".`,
     };
   },
 };
 
-export const clearCart: Capability = {
-  name: "clearCart",
-  description: "Removes all items from the user cart.",
-  scopes: ["cart:write"],
-  riskLevel: "destructive",
+export const bulkSetPriority: Capability = {
+  name: 'bulkSetPriority',
+  description: 'Changes the priority of multiple tasks at once. Provide an array of task IDs and the target priority.',
+  scopes: ['tasks:write'],
+  riskLevel: 'write',
+  schema: {
+    type: 'object',
+    properties: {
+      ids: { type: 'array', items: { type: 'string' } },
+      priority: { type: 'string', enum: ['low', 'medium', 'high'] },
+    },
+    required: ['ids', 'priority'],
+  },
+  execute: async (params: { ids: string[]; priority: TaskPriority }, context) => {
+    const userId = getAndSeed(context);
+    const results = params.ids.map(id => taskDb.updatePriority(userId, id, params.priority, 'ai'));
+    const updated = results.filter(Boolean);
+    return {
+      success: true,
+      data: { updated: updated.length, tasks: updated },
+      message: `Updated ${updated.length} of ${params.ids.length} tasks to "${params.priority}" priority.`,
+    };
+  },
+};
+
+// ─────────────────────────────────────────
+// DESTRUCTIVE capabilities (HITL required)
+// ─────────────────────────────────────────
+
+export const deleteTask: Capability = {
+  name: 'deleteTask',
+  description:
+    'Permanently deletes a single task by ID. This action is irreversible and requires human approval. After approval is granted, retry with the _approvalToken.',
+  scopes: ['tasks:admin'],
+  riskLevel: 'destructive',
+  schema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string' },
+    },
+    required: ['id'],
+  },
+  execute: async (params: { id: string }, context) => {
+    const userId = getAndSeed(context);
+    const deleted = taskDb.delete(userId, params.id);
+    if (!deleted) return { success: false, message: `Task "${params.id}" not found.` };
+    return { success: true, message: `Task "${params.id}" permanently deleted.` };
+  },
+};
+
+export const nukeAllTasks: Capability = {
+  name: 'nukeAllTasks',
+  description:
+    'Permanently deletes ALL tasks on the board. This is irreversible and requires human approval. Use only when explicitly instructed to wipe the entire board.',
+  scopes: ['tasks:admin'],
+  riskLevel: 'destructive',
   execute: async (_params, context) => {
-    const userId = requireUserId(context);
-    cartsByUser.set(userId, []);
-    return {
-      success: true,
-      data: [],
-    };
+    const userId = getAndSeed(context);
+    const count = taskDb.deleteAll(userId);
+    return { success: true, message: `Permanently deleted all ${count} tasks.` };
   },
 };
+
+export const ALL_CAPABILITIES = [
+  listTasks,
+  getTask,
+  createTask,
+  updateTask,
+  setStatus,
+  setPriority,
+  bulkSetStatus,
+  bulkSetPriority,
+  deleteTask,
+  nukeAllTasks,
+];

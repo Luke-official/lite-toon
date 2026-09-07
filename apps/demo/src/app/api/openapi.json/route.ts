@@ -12,14 +12,15 @@ export const GET = createOpenApiSpecHandler(agent, {
     const baseUrl = getBaseUrl(req);
     return {
       baseUrl,
-      title: 'Lite-Toon Demo Shop API',
+      title: 'TaskFlow API — lite-toon Demo',
       version: '1.0.0',
       oauth: {
         authorizationUrl: `${baseUrl}/api/oauth/authorize`,
         tokenUrl: `${baseUrl}/api/oauth/token`,
         scopes: {
-          'cart:read': 'Read cart and product catalog',
-          'cart:write': 'Modify cart contents',
+          'tasks:read': 'Read tasks',
+          'tasks:write': 'Create and update tasks',
+          'tasks:admin': 'Delete tasks (requires HITL approval)',
         },
       },
     };

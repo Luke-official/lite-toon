@@ -1,98 +1,195 @@
-# Connect AI Agents
+# Connect Claude to Your App
 
-Guide for merchants and developers connecting **Claude** to a Lite-Toon-powered application.
+A step-by-step guide to connect **Claude** to a lite-toon–powered application using [MCP Connectors](https://claude.ai/customize/connectors/).
 
-> **Supported today:** Claude via MCP Streamable HTTP (`/api/mcp`) on **Next.js App Router**.  
-> **Not supported yet:** ChatGPT and Gemini. They will be added in a future release — do not attempt to connect them today.
-
-End users shop in your webapp normally. They talk to Claude (or another supported assistant) for natural-language interactions — they never configure APIs, OAuth, or TOON themselves.
-
-## Prerequisites
-
-- Lite-Toon app deployed and reachable (or local demo running)
-- **HTTPS required** for Claude Chat in the browser (use [ngrok](https://ngrok.com/) or Cloudflare Tunnel for local testing)
-- Open `/connect` on your deployment for copy-paste endpoint URLs
-
-## Bridge endpoints
-
-Replace `your-domain` with your deployment URL.
-
-| Resource | URL |
-|---|---|
-| **MCP (Streamable HTTP)** | `GET`+`POST https://your-domain/api/mcp` |
-| OAuth authorize | `GET https://your-domain/api/oauth/authorize` |
-| OAuth token | `POST https://your-domain/api/oauth/token` |
-| OAuth register (DCR) | `POST https://your-domain/api/oauth/register` |
-| Protected resource metadata | `GET https://your-domain/.well-known/oauth-protected-resource` |
-| Authorization server metadata | `GET https://your-domain/.well-known/oauth-authorization-server` |
-| Developer setup guide | `GET https://your-domain/connect` |
-
-**Demo client ID:** `lite-toon-demo`  
-**Scopes:** `cart:read cart:write`
-
-## OAuth flow (Claude)
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Agent as Claude
-    participant OAuth as Lite-Toon OAuth
-    participant API as /api/mcp
-
-    Agent->>OAuth: Authorize (PKCE challenge)
-    OAuth->>User: Redirect to /login
-    User->>OAuth: Login + approve
-    OAuth->>Agent: Authorization code
-    Agent->>OAuth: Exchange code + verifier
-    OAuth->>Agent: access_token
-    User->>Agent: "Add 2 Nike shoes"
-    Agent->>API: tools/call addToCart + Bearer
-    API-->>Agent: MCP tool result
-    Agent-->>User: Natural language reply
-```
-
-### Steps
-
-1. Agent generates PKCE `code_verifier` and `code_challenge` (S256)
-2. Agent redirects user to `/api/oauth/authorize` with `client_id`, `redirect_uri`, `scope`, `code_challenge`
-3. User logs in at `/login` if no session exists
-4. User is redirected back to agent with `code`
-5. Agent exchanges `code` + `code_verifier` at `/api/oauth/token`
-6. Agent stores `access_token` and sends `Authorization: Bearer` on all tool calls
-
-Each user gets an isolated cart keyed by their OAuth `userId` — the same cart the webapp shows when signed in with the same username.
-
-See [OAuth & Authentication](../concepts/oauth.md) for technical details.
+> **Supported today:** Claude via MCP Streamable HTTP (`/api/mcp`) — any framework adapter (Next.js, Hono, Express, Fastify, Stdio).  
+> **Not yet supported:** ChatGPT Actions and Gemini Extensions.
 
 ---
 
-## Claude (MCP) — supported
+## How it works
 
-Claude connects via the **Model Context Protocol** at `/api/mcp` (Streamable HTTP).
+Claude connects to your app over the **Model Context Protocol (MCP)**. lite-toon exposes a single endpoint (`/api/mcp`) that Claude uses to discover tools, authenticate users via OAuth, and call capabilities.
 
-### Claude Chat (browser) with ngrok
+```
+Claude ──→ POST /api/mcp  (MCP Streamable HTTP)
+                │
+                ├─ tools/list  → discover your capabilities
+                └─ tools/call  → execute a capability
+                        │
+                        ↓
+                UniversalAgent.registry.execute()
+                        │
+                        ├─ read/write → runs immediately
+                        └─ destructive → HITL approval at /hitl
+```
 
-1. Start the demo: `npm run dev:clean`
-2. Expose HTTPS: `ngrok http 3000`
-3. In Claude → **Settings → Connectors → Add custom connector**
-4. MCP server URL: `https://<your-ngrok-host>/api/mcp`
-5. Click **Connect** — Claude discovers OAuth via `/.well-known/oauth-protected-resource`
-6. Sign in at `https://<your-ngrok-host>/login` when redirected (use a username you'll remember)
-7. Ask Claude: *"What products do you have?"* then *"Add 2 Nike shoes to my cart"*
-8. Open the shop at the same ngrok URL (signed in) to see the cart update
+Your web app and Claude call **the same capability functions** — only the transport layer differs.
 
-ngrok hosts matching `*.ngrok-free.app` and `*.ngrok.io` are allowed for OAuth redirects automatically.
+---
 
-### Supported MCP methods
+## Prerequisites
 
-| Method | Auth | Description |
+| Item | Requirement |
+|---|---|
+| lite-toon app | Running on a reachable HTTPS URL |
+| Claude account | [claude.ai](https://claude.ai) — free tier works |
+| HTTPS Tunnel | Required for Claude Chat (use [ngrok](https://ngrok.com) for local dev) |
+
+> **Local testing:** Claude Chat cannot reach `localhost` directly. You must expose your dev server over HTTPS using ngrok or a similar tunnel.
+
+---
+
+## Step 1 — Run the demo
+
+From the **monorepo root**:
+
+```bash
+# Install all workspaces
+npm install
+
+# Build all packages first (required once)
+npm run build
+
+# Start the demo app
+npm run dev -w apps/demo
+```
+
+The demo starts at `http://localhost:3000`.
+
+> **Windows PowerShell note:** Do not use `&&` — it is not supported in PowerShell 5.1. Run commands on separate lines or use `;`.
+
+---
+
+## Step 2 — Find your HTTPS URL
+
+When you ran `npm run dev -w apps/demo`, a background script automatically launched ngrok for you.
+
+Check your terminal output for a large banner that looks like this:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 🌍 NGROK TUNNEL READY: https://abc12345.ngrok-free.app
+    Use this URL for your Claude MCP Connector
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Use this public URL as your base URL for the rest of this guide.
+
+---
+
+## Step 3 — Register an account
+
+Open `https://<your-ngrok-host>/login` and register with a username and password. This creates your user identity — **the same account Claude will act on your behalf**.
+
+---
+
+## Step 4 — Add a connector in Claude
+
+1. Go to [claude.ai/customize/connectors](https://claude.ai/customize/connectors/)
+2. Click **Add connector**
+3. In the **MCP Server URL** field, paste:
+   ```
+   https://<your-ngrok-host>/api/mcp
+   ```
+4. Click **Connect**
+
+Claude automatically discovers OAuth via the `/.well-known/oauth-protected-resource` metadata endpoint — no manual configuration needed.
+
+---
+
+## Step 5 — Authorize OAuth
+
+Claude will open a popup redirecting to your app's login screen.
+
+1. Log in with the **same username** you registered in Step 3
+2. Review the OAuth consent screen — it lists the scopes Claude is requesting:
+   - `tasks:read` — list and view tasks
+   - `tasks:write` — create, update, and change task status
+   - `tasks:admin` — delete tasks (triggers HITL approval)
+3. Click **Approve**
+4. Claude confirms the connection is active
+
+---
+
+## Step 6 — Talk to Claude
+
+The connector is live. Open a new Claude conversation and try:
+
+```
+What tasks do I have?
+```
+
+Claude will call `listTasks` and summarize your board. From here, Claude can act autonomously on your tasks without asking for confirmation on every step.
+
+---
+
+## Demo prompts
+
+Copy any of these into Claude to see the full capability set in action:
+
+### Autonomous (no approval needed)
+
+```
+I have a product launch on Friday. Plan my week — create all the tasks 
+I'll need, assign realistic priorities, and mark anything that sounds 
+like a kickoff or planning activity as "in-progress".
+```
+
+```
+I just finished standup. Mark all my in-progress tasks as done and 
+create a new task: "Prepare for tomorrow's review" with high priority.
+```
+
+```
+Look at all my tasks and re-prioritize: anything due in the next 2 days 
+should be high priority, everything else medium or low.
+```
+
+```
+Go through my tasks. Add the tag "docs" to anything documentation-related, 
+and "devops" to anything infrastructure-related.
+```
+
+```
+Give me a daily summary: how many tasks are in each status, which 
+high-priority ones are overdue, and what I should focus on first.
+```
+
+### Destructive — triggers HITL approval
+
+```
+Delete the standup scheduling task — I don't need it anymore.
+```
+
+When Claude calls `deleteTask` or `nukeAllTasks`, it receives an approval-required response. It will tell you to visit `/hitl` to approve before it can proceed.
+
+Open `https://<your-ngrok-host>/hitl` in your browser, review the request, and click **Approve** or **Reject**.
+
+---
+
+## OAuth scopes reference
+
+| Scope | Capabilities unlocked |
+|---|---|
+| `tasks:read` | `listTasks`, `getTask` |
+| `tasks:write` | `createTask`, `updateTask`, `setStatus`, `setPriority`, `bulkSetStatus`, `bulkSetPriority` |
+| `tasks:admin` | `deleteTask`, `nukeAllTasks` — requires HITL approval |
+
+Grant only the scopes you want Claude to have access to. If you omit `tasks:admin`, Claude can still read and modify tasks but can never delete them.
+
+---
+
+## Available MCP methods
+
+| Method | Auth required | Description |
 |---|---|---|
 | `initialize` | No | Protocol handshake |
 | `ping` | No | Health check |
-| `tools/list` | No | Discover available tools |
-| `tools/call` | **Yes** | Execute a capability |
+| `tools/list` | No | Returns all registered capabilities as MCP tools |
+| `tools/call` | **Yes** | Executes a capability with the provided arguments |
 
-### Example tools/call
+### Example `tools/call` payload
 
 ```json
 {
@@ -100,88 +197,93 @@ ngrok hosts matching `*.ngrok-free.app` and `*.ngrok.io` are allowed for OAuth r
   "id": 1,
   "method": "tools/call",
   "params": {
-    "name": "addToCart",
-    "arguments": { "productId": "p1", "quantity": 2 }
+    "name": "createTask",
+    "arguments": {
+      "title": "Write release notes",
+      "priority": "high",
+      "tags": ["docs"],
+      "dueDate": "2025-09-10"
+    }
   }
 }
 ```
 
-### Troubleshooting
+---
+
+## Understanding the dual-channel pattern
+
+lite-toon exposes your app on two separate channels simultaneously:
+
+| Channel | Endpoint | Auth | Used by |
+|---|---|---|---|
+| Human REST API | `/api/tasks/*` | Session cookie | Browser, mobile, voice apps |
+| AI agent API | `/api/mcp` | OAuth Bearer | Claude, any MCP client |
+
+Both channels call the **same capability functions** in your app. You write business logic once; lite-toon handles the transport, auth, schema generation, and HITL for both.
+
+---
+
+## OAuth flow (technical detail)
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Claude
+    participant OAuth as lite-toon OAuth
+    participant MCP as /api/mcp
+
+    Claude->>OAuth: Discover via /.well-known/oauth-protected-resource
+    Claude->>OAuth: Authorize (PKCE challenge, scopes)
+    OAuth->>User: Redirect to /login
+    User->>OAuth: Login + approve scopes
+    OAuth->>Claude: Authorization code
+    Claude->>OAuth: Exchange code + PKCE verifier
+    OAuth->>Claude: access_token
+    User->>Claude: "Create a task for my review"
+    Claude->>MCP: tools/call createTask + Bearer token
+    MCP-->>Claude: MCP tool result
+    Claude-->>User: "Done — I've created the task 'Prepare for review' with high priority."
+```
+
+---
+
+## Troubleshooting
 
 | Problem | Solution |
 |---|---|
-| Claude cannot connect to localhost | Use ngrok or deploy to a public HTTPS URL |
-| OAuth redirect fails | Ensure ngrok URL is HTTPS; check `allowedRedirectUris` |
-| tools/call returns 401 | Complete OAuth connector flow in Claude settings |
-| Empty tools list | Verify capabilities are registered on the agent |
-| Cart not visible in browser | Sign in at `/login` with the same username used during Claude OAuth |
+| Claude cannot connect | Ensure your URL is HTTPS; `localhost` is not reachable from Claude Chat |
+| OAuth popup doesn't open | Pop-up blocker? Allow popups for claude.ai |
+| OAuth redirect fails | Check that your ngrok URL is HTTPS and still active |
+| `tools/call` returns 401 | Re-authorize: remove and re-add the connector in Claude settings |
+| Empty tools list | Ensure `npm run build` was run before starting dev — package dist files must exist |
+| HITL approval not firing | Confirm `hitlStore` is passed to `UniversalAgent` and `tasks:admin` scope was granted |
+| Tasks don't appear on board | Sign in at `/login` with the **same username** used during OAuth |
+| ngrok session expired | Restart ngrok and update the MCP URL in Claude connector settings |
 
 ---
-
-## ChatGPT — not supported yet
-
-ChatGPT (Custom GPT / Actions) integration is **not available today**. It will be added in a future release.
-
----
-
-## Gemini — not supported yet
-
-Gemini (Extensions / OpenAPI) integration is **not available today**. It will be added in a future release.
-
----
-
-## Local development with ngrok
-
-Claude Chat cannot reach `localhost`. Tunnel your dev server:
-
-```bash
-# Terminal 1
-npm run dev:clean
-
-# Terminal 2
-ngrok http 3000
-```
-
-Use the ngrok HTTPS URL as the MCP server host:
-
-- MCP: `https://abc123.ngrok.io/api/mcp`
-- Login: `https://abc123.ngrok.io/login`
 
 ## Testing without Claude
 
-With the dev server running:
+With the dev server running, you can verify the MCP endpoint directly:
 
 ```bash
-# MCP Streamable HTTP + OAuth discovery
-npm run test:mcp -w @lite-toon/demo
+# MCP protocol smoke test (initialize + tools/list)
+npm run test:mcp -w apps/demo
 
-# TOON direct access
-npm run test:api -w @lite-toon/demo
+# Capability unit tests (no server needed)
+npm run test:tasks -w apps/demo
+
+# OAuth flow + tools/call integration test
+npm run test:oauth -w apps/demo
 ```
 
-Or use the shop UI at `http://localhost:3000` — sign in and add products with **Add to cart** buttons.
-
-## Platform comparison
-
-| Feature | Claude *(supported)* | ChatGPT *(not yet)* | Gemini *(not yet)* | Direct `/api/agent` |
-|---|---|---|---|---|
-| Discovery | MCP `tools/list` | — | — | Manual |
-| Protocol | JSON-RPC on `/api/mcp` | — | — | TOON or JSON |
-| Auth | OAuth PKCE + Bearer | — | — | Optional Bearer |
-| Response format | MCP text content | — | — | TOON (default) |
-| Per-user context | Yes | — | — | Yes (with token) |
-
-## Architecture note
-
-- **Webapp** — session-authenticated REST (`/api/cart`, `/api/products`) for human users
-- **Bridge** — JSON-RPC on `/api/mcp` for Claude; TOON on `/api/agent` for direct integrations
-- Business logic lives in **capabilities**; bridge schemas are generated automatically
-- One capability update → webapp and all bridge transports stay in sync
+---
 
 ## Related
 
-- [OAuth & Authentication](../concepts/oauth.md)
-- [MCP Integration](../concepts/mcp.md)
-- [API Reference](../reference/api.md)
-- [Next.js Integration](./nextjs.md)
-- [Security](../security/overview.md)
+- [Getting Started](../getting-started.md) — run the demo in 5 minutes
+- [OAuth & Authentication](../concepts/oauth.md) — PKCE flow details
+- [MCP Integration](../concepts/mcp.md) — protocol reference
+- [Capabilities](../concepts/capabilities.md) — adding your own tools
+- [Human-in-the-Loop](../concepts/hitl.md) — HITL approval system
+- [API Reference](../reference/api.md) — all endpoints

@@ -9,7 +9,6 @@ export function demoFetch(input: RequestInfo | URL, init?: RequestInit): Promise
 
   return fetch(input, {
     ...init,
-    credentials: init?.credentials ?? 'same-origin',
     headers,
   });
 }

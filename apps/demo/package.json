@@ -10,13 +10,16 @@
     "directory": "apps/demo"
   },
   "scripts": {
-    "dev": "next dev",
+    "next-dev": "next dev",
+    "dev": "node scripts/dev-ngrok.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "test:api": "node scripts/test-api.js",
     "test:oauth": "node scripts/test-oauth.js",
-    "test:mcp": "node scripts/test-mcp.js"
+    "test:mcp": "node scripts/test-mcp.js",
+    "test:tasks": "npx tsx --tsconfig tsconfig.json scripts/test-capabilities.ts",
+    "test:all": "npm run test:tasks"
   },
   "dependencies": {
     "@lite-toon/bridge": "*",

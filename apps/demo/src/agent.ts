@@ -1,22 +1,20 @@
 import { UniversalAgent, InMemoryHitlStore } from '@lite-toon/bridge';
-import {
-  getProducts,
-  getCart,
-  addToCart,
-  removeFromCart,
-  clearCart,
-} from '@/demo/capabilities';
+import { ALL_CAPABILITIES } from '@/demo/capabilities';
 import { oauthServer } from '@/lib/auth';
 
-const globalForHitl = globalThis as unknown as {
+const globalForAgent = globalThis as unknown as {
   hitlStore: InMemoryHitlStore | undefined;
+  agent: UniversalAgent | undefined;
 };
 
-export const hitlStore = globalForHitl.hitlStore ?? new InMemoryHitlStore();
-if (process.env.NODE_ENV !== 'production') globalForHitl.hitlStore = hitlStore;
-
-export const agent = new UniversalAgent({
+export const hitlStore = globalForAgent.hitlStore ?? new InMemoryHitlStore();
+export const agent = globalForAgent.agent ?? new UniversalAgent({
   tokenResolver: oauthServer,
   hitlStore,
-  capabilities: [getProducts, getCart, addToCart, removeFromCart, clearCart],
+  capabilities: ALL_CAPABILITIES,
 });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForAgent.hitlStore = hitlStore;
+  globalForAgent.agent = agent;
+}
