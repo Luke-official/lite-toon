@@ -50,7 +50,7 @@ function LoginForm() {
 
           {/* Form */}
           <form
-            action={mode === 'login' ? '/api/oauth/login' : '/api/oauth/register'}
+            action="/api/oauth/login"
             method="POST"
             className="flex flex-col gap-4"
           >

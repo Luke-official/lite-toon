@@ -247,11 +247,13 @@ Full walkthrough: [`docs/integration/connect-agents.md`](docs/integration/connec
 1. Start the demo: `npm run dev -w apps/demo`
    - *This automatically starts Next.js and ngrok, printing your public URL.*
 2. In Claude → **Settings → Connectors → Add custom connector**
-3. MCP server URL: `https://<your-ngrok-host>/api/mcp`
+3. MCP server URL: Paste the `https://.../api/mcp` URL printed in your terminal.
 4. Click **Connect** — Claude discovers OAuth via `/.well-known/oauth-protected-resource`
-5. Sign in at `https://<your-ngrok-host>/login` when redirected
+5. Sign in when redirected
 6. Ask Claude: *"What tasks do I have?"* then *"Create a new task for my weekly review"*
 7. Open the board at the same ngrok URL (signed in) to see the tasks update
+
+> **Tip:** If you restart the terminal, ngrok generates a new random URL and you'll have to delete the connector in Claude and add it again. To fix this, claim your free static domain on ngrok and add `NGROK_DOMAIN=your-domain.ngrok-free.app` to your `.env` file!
 
 ngrok hosts matching `*.ngrok-free.app` and `*.ngrok.io` are allowed for OAuth redirects automatically.
 

@@ -5,6 +5,20 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appDir = resolve(__dirname, '..');
 
+// Read standard Next.js local env file since we bypass `next dev` initially
+import { readFileSync } from 'fs';
+try {
+  const envFile = readFileSync(resolve(appDir, '.env'), 'utf8');
+  envFile.split('\n').forEach(line => {
+    const match = line.match(/^([^#\s][^=]+)=(.*)$/);
+    if (match && !process.env[match[1]]) {
+      process.env[match[1]] = match[2].trim().replace(/^['"]|['"]$/g, '');
+    }
+  });
+} catch (e) {
+  // Ignore missing .env
+}
+
 console.log('🚀 Starting Next.js and ngrok tunnel...');
 
 // Start Next.js
@@ -15,7 +29,13 @@ const nextProcess = spawn('npm', ['run', 'next-dev'], {
 });
 
 // Start ngrok in background
-const ngrokProcess = spawn('ngrok', ['http', '3000', '--log', 'stdout'], {
+const ngrokDomain = process.env.NGROK_DOMAIN;
+const ngrokArgs = ['http', '3000', '--log', 'stdout'];
+if (ngrokDomain) {
+  ngrokArgs.push('--domain', ngrokDomain);
+}
+
+const ngrokProcess = spawn('ngrok', ngrokArgs, {
   cwd: appDir,
   shell: true,
 });
@@ -24,10 +44,31 @@ ngrokProcess.stdout.on('data', (data) => {
   const line = data.toString();
   const match = line.match(/url=(https:\/\/[^\s]+)/);
   if (match) {
-    console.log('\n' + '━'.repeat(60));
-    console.log(' 🌍 NGROK TUNNEL READY: ' + match[1]);
-    console.log('    Use this URL for your Claude MCP Connector');
-    console.log('━'.repeat(60) + '\n');
+    const baseUrl = match[1];
+    const mcpUrl = `${baseUrl}/api/mcp`;
+    console.log('\n' + '━'.repeat(70));
+    console.log(' 🚀 TASKFLOW DEMO & NGROK TUNNEL READY');
+    console.log('━'.repeat(70));
+    console.log(`\n 🌍 Base URL: ${baseUrl}\n`);
+    console.log(' 🤖 CLAUDE MCP CONNECTOR SETUP:');
+    console.log('    1. Go to Claude Settings -> Custom Connectors');
+    console.log('    2. Click "Add Connector"');
+    console.log('    3. Paste this EXACT URL into the "MCP Server URL" field:');
+    console.log(`       👉 ${mcpUrl} 👈\n`);
+    
+    if (!ngrokDomain) {
+      console.log(' ⚠️ IMPORTANT (Temporary Domain):');
+      console.log('    Every time you restart this terminal, this URL will change.');
+      console.log('    You will need to DELETE the old connector in Claude and add');
+      console.log('    a new one. To keep the same URL forever, claim a free static');
+      console.log('    domain on ngrok and add NGROK_DOMAIN=your-domain to .env');
+    } else {
+      console.log(' ✅ USING STATIC DOMAIN:');
+      console.log('    You can safely restart this terminal and Claude will instantly');
+      console.log('    reconnect without any re-configuration needed!');
+    }
+    
+    console.log('\n' + '━'.repeat(70) + '\n');
   }
 });
 

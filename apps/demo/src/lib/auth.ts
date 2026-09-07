@@ -1,6 +1,14 @@
 import { InMemoryAuthStore, OAuthServer } from '@lite-toon/bridge';
 
-export const authStore = new InMemoryAuthStore();
+const globalForAuth = globalThis as unknown as {
+  authStore: InMemoryAuthStore | undefined;
+};
+
+export const authStore = globalForAuth.authStore ?? new InMemoryAuthStore();
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForAuth.authStore = authStore;
+}
 
 const extraRedirectUris = (process.env.OAUTH_EXTRA_REDIRECT_URIS ?? '')
   .split(',')
